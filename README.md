@@ -60,7 +60,10 @@ This an homegrown project and does NOT APPLY TO ANY SECURITY STANDARTS ON PURPOS
 USE IT ON YOU OWN RISK, DON'T BLAME ME FOR SECURITY LEAKS, YOU HAVE TO SECURE YOURSELF AGAINST SECURITY BREACHS! 
 
 
-
+Feel free to use and update as you please! Just keep in mind: Mention me! I would like to get known over time!
+In case of Issues or change suggestions or wished feature, dont be too shy to ask for it!
+Discussions are wished! Let me know what you think! Im able to take critics (just don hit me!!).
+Just have in mind --> ITS MY VERY FIRST PROGRAM RELEASE EVER!! I AM NOT A CODER, JUST PROGRAMMER!
 
 
 #NO_MALICIOUS_CODE
