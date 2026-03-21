@@ -25,8 +25,8 @@ Here is what i have made for us:
 
 
 A simple but powerfull roadmap planner with graph and storyboard function to keep all in view!
-It comes with an integrated KI-Agent/Chat and tools. 
-You can connect via MCP serverc, acpx or directly with API_KEY to a LLM model like ChatGPT.
+It comes with an integrated AI-Agent/Chat and tools. 
+You can connect via MCP server, acpx or directly with API_KEY to a LLM model like ChatGPT.
 
 You got a WebUiChat on the right side, where u can just chat with ur LLM or give it specific commands.
 
@@ -38,7 +38,7 @@ While you are talking with the LLM and made a mistake pressing "Enter" too early
 if you forgot something and you can proceed!
 
 The Interface is easy to handle and almost self explaining!
-You have a lot of included features like flagging, showing routes, comment and even a field for code examples, solucions or more.
+You have a lot of included features like flagging, showing routes, comment and even a field for code examples, solutions or more.
 Glowing lines show the exact connection targets and origins from interconnections!
 Origins and Target are shown up with a small arrow on the beginning of the connector line.
 
@@ -55,15 +55,15 @@ A counter Shows if the Agent is working and since when the process is in work!
 Also is the last given input shown directly below the working counter!
 
 
-This an homegrown project and does NOT APPLY TO ANY SECURITY STANDARTS ON PURPOSE!!
+This an homegrown project and Local-first prototype, no hardening, not reviewed, don’t expose to the internet.!!
 
-USE IT ON YOU OWN RISK, DON'T BLAME ME FOR SECURITY LEAKS, YOU HAVE TO SECURE YOURSELF AGAINST SECURITY BREACHS! 
+USE IT ON YOU OWN RISK, DON'T BLAME ME FOR SECURITY LEAKS, YOU HAVE TO SECURE YOURSELF AGAINST SECURITY BREACHES! 
 
 
-Feel free to use and update as you please! Just keep in mind: Mention me! I would like to get known over time!
+Feel free to use and update as you please! Just keep in mind: „Credits appreciated“. I would like to get known over time!
 In case of Issues or change suggestions or wished feature, dont be too shy to ask for it!
-Discussions are wished! Let me know what you think! Im able to take critics (just don hit me!!).
-Just have in mind --> ITS MY VERY FIRST PROGRAM RELEASE EVER!! I AM NOT A CODER, JUST PROGRAMMER!
+Discussions are wished! Let me know what you think! Im able to take critism (just don hit me!!).
+Just have in mind --> ITS MY VERY FIRST PROGRAM RELEASE EVER!! I AM NOT A CODER, JUST PROGRAMMER BECOMING CODER!
 
 
 #NO_MALICIOUS_CODE
