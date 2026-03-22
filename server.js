@@ -58,10 +58,11 @@ const OPENAI_MODEL = String(process.env.ROADMAP_OPENAI_MODEL || process.env.OPEN
 
 // Throttle LLM requests to avoid hammering providers / rate-limits.
 // User requirement: 5s minimum gap between LLM requests.
-const MIN_LLM_INTERVAL_MS = Number(process.env.ROADMAP_LLM_MIN_INTERVAL_MS || 5000);
+const MIN_LLM_INTERVAL_MS = Number(process.env.ROADMAP_LLM_MIN_INTERVAL_MS || 0);
 let lastLlmRequestAtMs = 0;
 
 async function enforceLlmMinInterval() {
+  if (!MIN_LLM_INTERVAL_MS || MIN_LLM_INTERVAL_MS <= 0) return;
   const now = Date.now();
   const waitMs = Math.max(0, MIN_LLM_INTERVAL_MS - (now - lastLlmRequestAtMs));
   if (waitMs > 0) await delay(waitMs);
