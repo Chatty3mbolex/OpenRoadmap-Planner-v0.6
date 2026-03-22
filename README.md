@@ -1,4 +1,4 @@
-# OpenRoadmap-Planner-v0.6
+# OpenRoadmap-Planner-v1.0
 
 Hi,
 short:
