@@ -1,0 +1,15 @@
+{
+  "format": "text",
+  "authPolicy": "fail",
+  "defaultPermissions": "approve-reads",
+  "nonInteractivePermissions": "fail",
+  "timeout": null,
+  "ttl": 300,
+  "queueMaxDepth": 16,
+  "disableExec": false,
+  "agents": {
+    "openclaw": {
+      "command": "openclaw acp"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "_srd_version": "1.0",
+  "_source": "template",
+  "_description": "Blank template: categories + flags",
+
+  "categories": [
+    { "id": "VIS",  "name": "Vision & Experience", "prefix": "VIS",  "color": "#22c55e", "description": "What the player should feel/see" },
+    { "id": "ARCH", "name": "Architecture",       "prefix": "ARCH", "color": "#3b82f6", "description": "Core architecture decisions" },
+    { "id": "SRV",  "name": "Server Modules",     "prefix": "SRV",  "color": "#7c3aed", "description": "Server-side systems" },
+    { "id": "CLI",  "name": "Client Modules",     "prefix": "CLI",  "color": "#f59e0b", "description": "Client-side systems" },
+    { "id": "GAM",  "name": "Gameplay",           "prefix": "GAM",  "color": "#ef4444", "description": "Gameplay mechanics" },
+    { "id": "WLD",  "name": "World & Design",     "prefix": "WLD",  "color": "#14b8a6", "description": "World, levels, environment" },
+    { "id": "ART",  "name": "Art & Assets",       "prefix": "ART",  "color": "#a855f7", "description": "Assets, visuals, audio" },
+    { "id": "METH", "name": "Methods & Modules",  "prefix": "METH", "color": "#06b6d4", "description": "Implementation modules / methods" },
+    { "id": "XREF", "name": "Cross References",   "prefix": "XREF", "color": "#64748b", "description": "Glue references" }
+  ],
+
+  "flags": [
+    { "id": "is_core",      "name": "Core",            "appliesTo": ["ARCH", "SRV", "CLI", "GAM"], "description": "Foundational system" },
+    { "id": "is_server",    "name": "Server-side",     "appliesTo": ["SRV", "METH"],             "description": "Runs on server" },
+    { "id": "is_client",    "name": "Client-side",     "appliesTo": ["CLI", "VIS"],              "description": "Runs on client" },
+    { "id": "is_ui",        "name": "UI",              "appliesTo": ["VIS", "CLI"],              "description": "User interface related" },
+    { "id": "is_network",   "name": "Networking",      "appliesTo": ["SRV", "CLI"],              "description": "Networking related" },
+    { "id": "is_story",     "name": "Story",           "appliesTo": ["VIS", "WLD"],              "description": "Narrative / story" }
+  ]
+}

@@ -1,0 +1,960 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARMEN â€” Roadmap</title>
+<style>
+/* â”€â”€ RESET & TOKENS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#12151c;--bg3:#1a1e28;--bg4:#242934;
+  --tx:#c8cdd8;--tx2:#8b92a0;--tx3:#5c6370;
+  --acc:#00d4ff;--acc2:#7c3aed;--acc3:#f59e0b;--acc4:#10b981;--acc5:#ef4444;--acc6:#ec4899;
+  --border:#2a2f3a;
+  --radius:6px;--radius2:10px;
+  --mono:'Cascadia Code','JetBrains Mono','Fira Code',monospace;
+  --sans:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --transition:0.2s ease;
+}
+html{font-size:13px}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+a{color:var(--acc);text-decoration:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--tx3)}
+
+/* â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+#header{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:16px;z-index:100;flex-shrink:0}
+#header h1{font-size:1.1rem;font-weight:700;color:var(--acc);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+#header .sep{width:1px;height:20px;background:var(--border)}
+.tab-bar{display:flex;gap:2px}
+.tab{padding:6px 14px;border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;font-size:0.85rem;font-weight:500;color:var(--tx2);border:1px solid transparent;border-bottom:none;transition:var(--transition)}
+.tab:hover{color:var(--tx);background:var(--bg3)}
+.tab.active{color:var(--acc);background:var(--bg);border-color:var(--border)}
+.header-actions{margin-left:auto;display:flex;gap:8px}
+.btn{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--tx);cursor:pointer;font-size:0.8rem;font-family:var(--sans);transition:var(--transition)}
+.btn:hover{background:var(--bg4);border-color:var(--tx3)}
+.btn.primary{background:var(--acc);color:var(--bg);border-color:var(--acc);font-weight:600}
+.btn.primary:hover{opacity:0.85}
+.btn.danger{border-color:var(--acc5);color:var(--acc5)}
+.btn.danger:hover{background:var(--acc5);color:#fff}
+
+/* â”€â”€ MAIN LAYOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+#main{flex:1;display:flex;overflow:hidden}
+#sidebar{width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+#content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#detail-panel{width:420px;min-width:420px;background:var(--bg2);border-left:1px solid var(--border);display:none;flex-direction:column;overflow:hidden}
+#detail-panel.open{display:flex}
+
+/* â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.sidebar-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-header input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:5px 8px;font-size:0.85rem;font-family:var(--sans);outline:none}
+.sidebar-header input:focus{border-color:var(--acc)}
+.cat-list{flex:1;overflow-y:auto;padding:4px 0}
+.cat-group{margin-bottom:2px}
+.cat-header{padding:6px 12px;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.cat-header:hover{color:var(--tx2)}
+.cat-header .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cat-header .count{margin-left:auto;font-weight:400;font-size:0.72rem;opacity:0.6}
+.cat-header .arrow{font-size:0.65rem;transition:transform 0.15s}
+.cat-header.collapsed .arrow{transform:rotate(-90deg)}
+.cat-nodes{padding:0}
+.cat-nodes.hidden{display:none}
+.node-item{padding:5px 12px 5px 28px;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:var(--transition);border-left:2px solid transparent}
+.node-item:hover{background:var(--bg3)}
+.node-item.selected{background:var(--bg3);border-left-color:var(--acc);color:var(--acc)}
+.node-item .status{font-size:0.65rem;padding:1px 5px;border-radius:3px;font-weight:600;white-space:nowrap}
+.status-decided{background:#10b98122;color:var(--acc4)}
+.status-open{background:#f59e0b22;color:var(--acc3)}
+.status-pre{background:#7c3aed22;color:var(--acc2)}
+
+/* â”€â”€ GRAPH VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+#graph-container{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+#graph-canvas{width:100%;height:100%}
+.graph-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:4px}
+
+/* â”€â”€ DETAIL PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.detail-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.detail-header h2{font-size:1rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-close{cursor:pointer;color:var(--tx3);font-size:1.2rem;padding:2px 6px}
+.detail-close:hover{color:var(--tx)}
+.detail-body{flex:1;overflow-y:auto;padding:16px}
+.detail-section{margin-bottom:16px}
+.detail-section h3{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.detail-field{margin-bottom:10px}
+.detail-field label{display:block;font-size:0.75rem;color:var(--tx3);margin-bottom:3px;font-weight:500}
+.detail-field input,.detail-field textarea,.detail-field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:6px 8px;font-size:0.85rem;font-family:var(--sans);outline:none;resize:vertical}
+.detail-field input:focus,.detail-field textarea:focus,.detail-field select:focus{border-color:var(--acc)}
+.detail-field textarea{min-height:60px;font-family:var(--mono);font-size:0.8rem}
+.code-solution{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;font-family:var(--mono);font-size:0.8rem;min-height:80px;color:var(--acc3)}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px}
+.tag{padding:2px 8px;border-radius:3px;font-size:0.72rem;font-weight:500;border:1px solid var(--border);cursor:pointer;transition:var(--transition)}
+.tag:hover{border-color:var(--acc)}
+.tag.active{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.conn-list{list-style:none}
+.conn-list li{padding:4px 0;font-size:0.82rem;display:flex;align-items:center;gap:6px;cursor:pointer}
+.conn-list li:hover{color:var(--acc)}
+.conn-type{font-size:0.65rem;padding:1px 5px;border-radius:3px;font-weight:600;background:var(--bg4)}
+
+/* â”€â”€ STORY TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+#story-view{display:none;flex:1;overflow-y:auto;padding:20px}
+.story-timeline{position:relative;padding-left:30px}
+.story-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border)}
+.story-beat{position:relative;margin-bottom:16px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);cursor:pointer;transition:var(--transition)}
+.story-beat:hover{border-color:var(--acc);transform:translateX(4px)}
+.story-beat::before{content:'';position:absolute;left:-23px;top:16px;width:10px;height:10px;border-radius:50%;border:2px solid var(--acc);background:var(--bg)}
+.story-beat.cut{border-left:3px solid var(--acc6)}
+.story-beat.cut::before{background:var(--acc6);border-color:var(--acc6)}
+.story-beat.scene{border-left:3px solid var(--acc4)}
+.story-beat.scene::before{background:var(--acc4);border-color:var(--acc4)}
+.story-beat h4{font-size:0.9rem;margin-bottom:4px}
+.story-beat p{font-size:0.8rem;color:var(--tx2);line-height:1.4}
+.story-refs{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+/* â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);width:520px;max-height:80vh;overflow-y:auto;padding:20px}
+.modal h2{font-size:1rem;margin-bottom:16px;color:var(--acc)}
+
+/* â”€â”€ TOAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--acc);color:var(--bg);padding:8px 20px;border-radius:var(--radius);font-weight:600;font-size:0.85rem;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:300}
+#toast.show{opacity:1}
+
+/* â”€â”€ AGENT PANEL (Chat + Ticker) â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€ */
+body.agent-open #main{margin-right:340px}
+/* When the agent panel is open, keep the header controls visible by reserving space on the right. */
+body.agent-open #header{padding-right:356px}
+#agent-panel{position:fixed;right:0;top:0;width:340px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:150;transform:translateX(100%);transition:transform .25s ease}
+#agent-panel.open{transform:translateX(0)}
+#agent-ticker{padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:.75rem;line-height:1.6;font-family:var(--mono)}
+#agent-ticker .busy{color:var(--acc3);font-weight:700}
+#agent-ticker .idle{color:var(--tx3)}
+#agent-ticker .active-refs{color:var(--acc4);margin-top:2px}
+#agent-ticker .last-refs{color:var(--tx3);margin-top:2px}
+#chat-messages{flex:1;overflow-y:auto;padding:8px}
+.chat-msg{margin-bottom:6px;padding:6px 10px;border-radius:var(--radius);font-size:.8rem;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.chat-msg.user{background:#1e3a5f;border-left:3px solid #3b82f6}
+.chat-msg.assistant{background:#1a2e1a;border-left:3px solid var(--acc4)}
+#chat-input-bar{display:flex;padding:6px;background:var(--bg);border-top:1px solid var(--border);gap:4px}
+#chat-input{flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-size:.82rem;font-family:var(--sans);outline:none}
+#chat-input:focus{border-color:var(--acc)}
+#chat-send-btn{background:var(--acc);color:var(--bg);border:none;border-radius:var(--radius);padding:6px 14px;cursor:pointer;font-size:.8rem;font-weight:600}
+#chat-send-btn:hover{opacity:.85}
+#chat-send-btn:disabled{background:var(--bg4);cursor:not-allowed;color:var(--tx3)}
+
+/* â”€â”€ WORK-STATE GLOW â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€ */
+.node-item[data-ws="active"]{background:rgba(245,158,11,.12)!important;border-left-color:var(--acc3)!important}
+.node-item[data-ws="last"]{background:rgba(107,114,128,.08)!important;border-left-color:var(--tx3)!important;border-left-style:dashed!important}
+.story-beat[data-ws="active"]{box-shadow:0 0 10px 3px rgba(245,158,11,.5);border-color:var(--acc3)!important}
+.story-beat[data-ws="last"]{box-shadow:0 0 6px 2px rgba(107,114,128,.3);border-color:var(--tx3)!important;border-style:dashed!important}
+
+/* â”€â”€ CATEGORY WORK-STATE GLOW â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€ */
+.cat-header[data-ws="active"]{color:var(--acc3)!important}
+.cat-header[data-ws="active"] .dot{box-shadow:0 0 10px 3px rgba(245,158,11,.75)}
+.cat-header[data-ws="last"]{color:var(--tx2)!important}
+.cat-header[data-ws="last"] .dot{box-shadow:0 0 8px 2px rgba(107,114,128,.6)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>â˜… STARMEN</h1>
+  <div class="sep"></div>
+  <div class="tab-bar">
+    <div class="tab active" data-tab="systems" onclick="switchTab('systems')">Systeme</div>
+    <div class="tab" data-tab="story" onclick="switchTab('story')">Storyboard</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="triggerScan()">âŸ³ Scan</button>
+    <button class="btn primary" onclick="openCreateModal()">+ Neu</button>
+    <button class="btn" onclick="exportDB()">â†“ Export</button>
+    <button class="btn" id="agent-toggle" onclick="toggleAgentPanel()">ðŸ¤– Agent</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <input type="text" id="search" placeholder="Suche..." oninput="filterNodes()">
+    </div>
+    <div id="cat-list" class="cat-list"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <div id="graph-container">
+      <canvas id="graph-canvas"></canvas>
+      <div class="graph-controls">
+        <button class="btn" onclick="zoomGraph(1.2)">+</button>
+        <button class="btn" onclick="zoomGraph(0.8)">âˆ’</button>
+        <button class="btn" onclick="resetGraph()">âŠ™</button>
+      </div>
+    </div>
+    <div id="story-view"></div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div id="detail-panel">
+    <div class="detail-header">
+      <h2 id="detail-title">â€”</h2>
+      <span class="detail-close" onclick="closeDetail()">âœ•</span>
+    </div>
+    <div id="detail-body" class="detail-body"></div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <h2>Neuer Eintrag</h2>
+    <div class="detail-field"><label>Typ</label>
+      <select id="new-type"><option value="node">System-Node</option><option value="storybeat">Storybeat</option></select>
+    </div>
+    <div class="detail-field"><label>Kategorie</label><select id="new-cat"></select></div>
+    <div class="detail-field"><label>REF-ID (z.B. GAM-015)</label><input id="new-refid"></div>
+    <div class="detail-field"><label>Titel</label><input id="new-title"></div>
+    <div class="detail-field"><label>Beschreibung</label><textarea id="new-desc" rows="3"></textarea></div>
+    <div class="detail-field"><label>Status</label>
+      <select id="new-status"><option value="OFFEN">OFFEN</option><option value="ENTSCHIEDEN">ENTSCHIEDEN</option><option value="PRE-FORMULIERUNG">PRE-FORMULIERUNG</option></select>
+    </div>
+    <div class="detail-field"><label>Flags (kommagetrennt)</label><input id="new-flags" placeholder="is_item, is_module, is_weapon..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" onclick="closeCreateModal()">Abbrechen</button>
+      <button class="btn primary" onclick="createEntry()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- AGENT PANEL (Chat + Ticker) â”€â”€â”€ NEU -->
+<div id="agent-panel">
+  <div id="agent-ticker">
+    <div id="agent-status-line" class="idle">Agent: idle</div>
+    <div id="agent-task" style="display:none"></div>
+    <div id="agent-active-refs" class="active-refs" style="display:none"></div>
+    <div id="agent-last-refs" class="last-refs" style="display:none"></div>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-bar">
+    <input id="chat-input" type="text" placeholder="Nachricht an Agent..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send-btn" onclick="sendChat()">Senden</button>
+  </div>
+</div>
+
+<script>
+// â”€â”€â”€ STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let DB = { categories: [], nodes: [], storybeats: [], connections: [], flags: [], meta: {} };
+let selectedNode = null;
+let graphState = { zoom: 1, panX: 0, panY: 0, dragging: false, dragStart: null, nodePositions: {} };
+let currentTab = 'systems';
+
+// Agent-driven file glow (server sends activeFiles + lastFiles)
+let AGENT_ACTIVE_FILES = [];
+let AGENT_LAST_FILES = [];
+let AGENT_ACTIVE_REFS = [];
+let AGENT_LAST_REFS = [];
+
+// Connection highlighting: we highlight connections for
+// 1) the currently selected node
+// 2) nodes the agent is actively working on (by refId)
+// If there are no connections for these refs, nothing special is drawn.
+function getHighlightedRefs() {
+  const refs = new Set();
+
+  // Selected node (prefer refId, fall back to id)
+  if (selectedNode) {
+    const r = String(selectedNode.refId || '').trim();
+    const id = String(selectedNode.id || '').trim();
+    if (r) refs.add(r);
+    if (id) refs.add(id);
+  }
+
+  // Agent active refs
+  for (const r of (AGENT_ACTIVE_REFS || [])) {
+    const t = String(r || '').trim();
+    if (t) refs.add(t);
+  }
+
+  return refs;
+}
+
+function connIsHighlighted(conn, highlightedRefs) {
+  if (!conn || !highlightedRefs || highlightedRefs.size === 0) return false;
+  const from = String(conn.fromId || '').trim();
+  const to = String(conn.toId || '').trim();
+  return (from && highlightedRefs.has(from)) || (to && highlightedRefs.has(to));
+}
+
+function normFile(x) {
+  return String(x || '').trim();
+}
+
+function effectiveWorkStateForNode(node) {
+  const ref = normFile(node?.refId);
+  if (ref) {
+    if (AGENT_ACTIVE_REFS.includes(ref)) return 'active';
+    if (AGENT_LAST_REFS.includes(ref)) return 'last';
+  }
+  const f = normFile(node?.sourceFile);
+  if (f) {
+    if (AGENT_ACTIVE_FILES.includes(f)) return 'active';
+    if (AGENT_LAST_FILES.includes(f)) return 'last';
+  }
+  return node?.workState || 'idle';
+}
+
+function effectiveWorkStateForBeat(beat) {
+  const f = normFile(beat?.sourceFile);
+  if (f) {
+    if (AGENT_ACTIVE_FILES.includes(f)) return 'active';
+    if (AGENT_LAST_FILES.includes(f)) return 'last';
+  }
+  return beat?.workState || 'idle';
+}
+
+// â”€â”€â”€ API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+async function loadDB() {
+  DB = await api('/db');
+  renderSidebar();
+  renderGraph();
+  if (currentTab === 'story') renderStory();
+}
+
+async function triggerScan() {
+  const r = await api('/scan', 'POST');
+  toast(`Scan: ${r.files} Dateien, +${r.totalAdded} neu, ~${r.totalUpdated} aktualisiert`);
+  await loadDB();
+}
+
+function exportDB() { window.open('/api/export'); }
+
+// â”€â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderSidebar() {
+  const catList = document.getElementById('cat-list');
+  const search = document.getElementById('search').value.toLowerCase();
+
+  // Group nodes by category
+  const groups = {};
+  for (const node of DB.nodes) {
+    const catId = node.categoryId || 'uncategorized';
+    if (!groups[catId]) groups[catId] = [];
+    if (search && !node.title?.toLowerCase().includes(search) && !node.refId?.toLowerCase().includes(search)) continue;
+    groups[catId].push(node);
+  }
+
+  // Color map
+  const catColors = { ARCH: '#00d4ff', SRV: '#7c3aed', CLI: '#ec4899', GAM: '#10b981', WLD: '#f59e0b', ART: '#ef4444', METH: '#06b6d4', VIS: '#a78bfa', XREF: '#6b7280' };
+
+  let html = '';
+  const catOrder = ['VIS', 'ARCH', 'SRV', 'CLI', 'GAM', 'WLD', 'ART', 'METH', 'XREF'];
+
+  for (const prefix of catOrder) {
+    const nodes = DB.nodes.filter(n => n.refId?.startsWith(prefix + '-'));
+    if (search) {
+      const filtered = nodes.filter(n => n.title?.toLowerCase().includes(search) || n.refId?.toLowerCase().includes(search));
+      if (filtered.length === 0) continue;
+    }
+    const color = catColors[prefix] || '#888';
+    const displayNodes = search ? nodes.filter(n => n.title?.toLowerCase().includes(search) || n.refId?.toLowerCase().includes(search)) : nodes;
+
+    // Category work-state = aggregated from effective node states.
+    // Priority: active > last > idle
+    let catWs = '';
+    if (displayNodes.some(n => effectiveWorkStateForNode(n) === 'active')) catWs = 'active';
+    else if (displayNodes.some(n => effectiveWorkStateForNode(n) === 'last')) catWs = 'last';
+
+    html += `<div class="cat-group">
+      <div class="cat-header" data-ws="${catWs}" onclick="toggleCat(this)" style="color:${color}">
+        <span class="arrow">â–¼</span><span class="dot" style="background:${color}"></span>
+        ${prefix} <span class="count">${displayNodes.length}</span>
+      </div>
+      <div class="cat-nodes">`;
+    for (const n of displayNodes) {
+      const statusCls = n.status === 'ENTSCHIEDEN' ? 'status-decided' : n.status === 'PRE-FORMULIERUNG' ? 'status-pre' : 'status-open';
+      const sel = selectedNode?.id === n.id ? 'selected' : '';
+      const ws = effectiveWorkStateForNode(n);
+      html += `<div class="node-item ${sel}" data-ws="${ws}" onclick="selectNode('${n.id}')">
+        <span class="status ${statusCls}">${n.status?.[0] || '?'}</span>
+        <span style="opacity:0.5;font-size:0.72rem">${n.refId || ''}</span>
+        ${n.title || 'Untitled'}
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+
+  // Uncategorized
+  const uncategorized = DB.nodes.filter(n => !catOrder.some(p => n.refId?.startsWith(p + '-')));
+  if (uncategorized.length > 0) {
+    html += `<div class="cat-group"><div class="cat-header" onclick="toggleCat(this)"><span class="arrow">â–¼</span><span class="dot" style="background:#666"></span>ANDERE <span class="count">${uncategorized.length}</span></div><div class="cat-nodes">`;
+    for (const n of uncategorized) {
+      html += `<div class="node-item" onclick="selectNode('${n.id}')">${n.title || n.id}</div>`;
+    }
+    html += '</div></div>';
+  }
+
+  catList.innerHTML = html;
+}
+
+function filterNodes() { renderSidebar(); }
+function toggleCat(el) { el.classList.toggle('collapsed'); el.nextElementSibling.classList.toggle('hidden'); }
+
+// â”€â”€â”€ GRAPH RENDERING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const canvas = document.getElementById('graph-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  renderGraph();
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 100);
+
+function layoutNodes() {
+  const catColors = { ARCH: '#00d4ff', SRV: '#7c3aed', CLI: '#ec4899', GAM: '#10b981', WLD: '#f59e0b', ART: '#ef4444', METH: '#06b6d4', VIS: '#a78bfa', XREF: '#6b7280' };
+  const groups = {};
+  for (const n of DB.nodes) {
+    const prefix = n.refId?.split('-')[0] || 'OTHER';
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(n);
+  }
+
+  const catOrder = ['VIS', 'ARCH', 'SRV', 'CLI', 'GAM', 'WLD', 'ART', 'METH', 'XREF'];
+  const positions = {};
+  let colIdx = 0;
+  for (const prefix of catOrder) {
+    const nodes = groups[prefix] || [];
+    for (let i = 0; i < nodes.length; i++) {
+      positions[nodes[i].id] = {
+        x: 120 + colIdx * 160,
+        y: 60 + i * 50,
+        color: catColors[prefix] || '#888',
+        prefix
+      };
+    }
+    colIdx++;
+  }
+  graphState.nodePositions = positions;
+}
+
+function renderGraph() {
+  if (!canvas.width) return;
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.translate(graphState.panX, graphState.panY);
+  ctx.scale(graphState.zoom, graphState.zoom);
+
+  layoutNodes();
+  const pos = graphState.nodePositions;
+
+  // Determine which refs should have their connections highlighted.
+  // - selected node
+  // - agent-active refs
+  // If there are no connections, nothing extra is drawn.
+  const highlightedRefs = getHighlightedRefs();
+
+  // Draw connections
+  for (const conn of DB.connections) {
+    const from = pos[conn.fromId];
+    const to = pos[conn.toId];
+    if (!from || !to) continue;
+
+    const isHL = connIsHighlighted(conn, highlightedRefs);
+
+    // Base color by type
+    const baseStroke = conn.type === 'depends'
+      ? '#ffffff18'
+      : conn.type === 'provides'
+        ? '#10b98130'
+        : '#7c3aed20';
+
+    // Highlight stroke (thin glowing line)
+    const hlStroke = conn.type === 'depends'
+      ? 'rgba(245,158,11,0.85)'
+      : conn.type === 'provides'
+        ? 'rgba(16,185,129,0.85)'
+        : 'rgba(124,58,237,0.85)';
+
+    // Glow pass (only when highlighted)
+    if (isHL) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      const cpx = (from.x + to.x) / 2;
+      ctx.bezierCurveTo(cpx, from.y, cpx, to.y, to.x, to.y);
+      ctx.strokeStyle = hlStroke;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = hlStroke;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Normal pass
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    const cpx = (from.x + to.x) / 2;
+    ctx.bezierCurveTo(cpx, from.y, cpx, to.y, to.x, to.y);
+    ctx.strokeStyle = isHL ? hlStroke : baseStroke;
+    ctx.lineWidth = isHL ? 1.2 : 1;
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (const [id, p] of Object.entries(pos)) {
+    const node = DB.nodes.find(n => n.id === id);
+    if (!node) continue;
+    const isSelected = selectedNode?.id === id;
+    const r = isSelected ? 7 : 5;
+
+    const ws = effectiveWorkStateForNode(node);
+
+    // Work-state glow (active/last)
+    if (ws === 'active' || ws === 'last') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = ws === 'active' ? 'rgba(245,158,11,0.9)' : 'rgba(107,114,128,0.85)';
+      ctx.lineWidth = 2;
+      if (ws === 'last') {
+        ctx.setLineDash([4, 3]);
+      } else {
+        ctx.setLineDash([]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#fff' : p.color;
+    ctx.fill();
+    if (isSelected) { ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.stroke(); }
+
+    ctx.font = '9px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = isSelected ? '#fff' : 'rgba(200,205,216,0.6)';
+    ctx.fillText(node.refId || '', p.x + 10, p.y + 3);
+  }
+
+  ctx.restore();
+}
+
+// Graph interaction
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
+canvas.addEventListener('mousedown', (e) => { graphState.dragging = true; graphState.dragStart = { x: e.clientX - graphState.panX, y: e.clientY - graphState.panY }; });
+canvas.addEventListener('mousemove', (e) => { if (graphState.dragging) { graphState.panX = e.clientX - graphState.dragStart.x; graphState.panY = e.clientY - graphState.dragStart.y; renderGraph(); } });
+canvas.addEventListener('mouseup', () => { graphState.dragging = false; });
+canvas.addEventListener('click', (e) => {
+  if (graphState.dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left - graphState.panX) / graphState.zoom;
+  const my = (e.clientY - rect.top - graphState.panY) / graphState.zoom;
+  for (const [id, p] of Object.entries(graphState.nodePositions)) {
+    if (Math.hypot(mx - p.x, my - p.y) < 12) { selectNode(id); return; }
+  }
+});
+
+function zoomGraph(factor) { graphState.zoom *= factor; graphState.zoom = Math.max(0.1, Math.min(5, graphState.zoom)); renderGraph(); }
+function resetGraph() { graphState.zoom = 1; graphState.panX = 0; graphState.panY = 0; renderGraph(); }
+
+// â”€â”€â”€ NODE SELECTION & DETAIL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function selectNode(id) {
+  selectedNode = DB.nodes.find(n => n.id === id || n.refId === id);
+  if (!selectedNode) return;
+  renderSidebar();
+  renderGraph();
+  renderDetail();
+}
+
+function renderDetail() {
+  if (!selectedNode) return;
+  const panel = document.getElementById('detail-panel');
+  const n = selectedNode;
+  panel.classList.add('open');
+  document.getElementById('detail-title').textContent = `${n.refId || ''} ${n.title || ''}`;
+
+  const connsFrom = DB.connections.filter(c => c.fromId === n.id || c.fromId === n.refId);
+  const connsTo = DB.connections.filter(c => c.toId === n.id || c.toId === n.refId);
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <h3>âš™ Grunddaten</h3>
+      <div class="detail-field"><label>REF-ID</label><input value="${n.refId || ''}" onchange="updateNode('refId',this.value)"></div>
+      <div class="detail-field"><label>Titel</label><input value="${n.title || ''}" onchange="updateNode('title',this.value)"></div>
+      <div class="detail-field"><label>Status</label>
+        <select onchange="updateNode('status',this.value)">
+          <option ${n.status === 'OFFEN' ? 'selected' : ''}>OFFEN</option>
+          <option ${n.status === 'ENTSCHIEDEN' ? 'selected' : ''}>ENTSCHIEDEN</option>
+          <option ${n.status === 'PRE-FORMULIERUNG' ? 'selected' : ''}>PRE-FORMULIERUNG</option>
+        </select>
+      </div>
+      <div class="detail-field"><label>Beschreibung</label><textarea rows="4" onchange="updateNode('description',this.value)">${n.description || ''}</textarea></div>
+    </div>
+
+    <div class="detail-section">
+      <h3>ðŸ· Flags</h3>
+      <div class="detail-field">
+        <div class="tag-list">${(n.flags || []).map(f => `<span class="tag active">${f}</span>`).join('')}</div>
+        <input placeholder="Flag hinzufÃ¼gen..." style="margin-top:6px" onkeydown="if(event.key==='Enter'){addFlag(this.value);this.value=''}">
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>ðŸ”— Verbindungen (${connsFrom.length + connsTo.length})</h3>
+      <ul class="conn-list">
+        ${connsFrom.map(c => `<li onclick="selectNode('${c.toId}')"><span class="conn-type">${c.type}</span>â†’ ${c.toId} ${c.label || ''}</li>`).join('')}
+        ${connsTo.map(c => `<li onclick="selectNode('${c.fromId}')"><span class="conn-type">${c.type}</span>â† ${c.fromId} ${c.label || ''}</li>`).join('')}
+      </ul>
+      <div style="margin-top:8px;display:flex;gap:4px">
+        <input id="conn-target" placeholder="Ziel REF-ID..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:4px 6px;font-size:0.8rem">
+        <select id="conn-type" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:4px;font-size:0.8rem">
+          <option value="depends">depends</option><option value="provides">provides</option><option value="emits">emits</option><option value="listens">listens</option><option value="custom">custom</option>
+        </select>
+        <button class="btn" onclick="addConnection()">+</button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>ðŸ’¡ LÃ¶sungsvorschlag</h3>
+      <textarea class="code-solution" rows="6" onchange="updateNode('codeSolution',this.value)" placeholder="Code, Pseudocode, Architekturidee...">${n.codeSolution || ''}</textarea>
+    </div>
+
+    <div class="detail-section">
+      <button class="btn danger" onclick="deleteNode('${n.id}')">ðŸ—‘ Eintrag lÃ¶schen</button>
+    </div>
+  `;
+}
+
+function closeDetail() { document.getElementById('detail-panel').classList.remove('open'); selectedNode = null; renderSidebar(); renderGraph(); }
+
+async function updateNode(key, value) {
+  if (!selectedNode) return;
+  selectedNode[key] = value;
+  await api('/nodes/' + selectedNode.id, 'PUT', selectedNode);
+  renderSidebar();
+  renderGraph();
+}
+
+async function addFlag(flag) {
+  if (!selectedNode || !flag.trim()) return;
+  if (!selectedNode.flags) selectedNode.flags = [];
+  selectedNode.flags.push(flag.trim());
+  await api('/nodes/' + selectedNode.id, 'PUT', selectedNode);
+  renderDetail();
+}
+
+async function addConnection() {
+  const target = document.getElementById('conn-target').value.trim();
+  const type = document.getElementById('conn-type').value;
+  if (!target || !selectedNode) return;
+  await api('/connections', 'POST', { fromId: selectedNode.refId || selectedNode.id, toId: target, type });
+  await loadDB();
+  renderDetail();
+}
+
+async function deleteNode(id) {
+  if (!confirm('Wirklich lÃ¶schen?')) return;
+  await api('/nodes/' + id, 'DELETE');
+  closeDetail();
+  await loadDB();
+}
+
+// â”€â”€â”€ STORY VIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderStory() {
+  const container = document.getElementById('story-view');
+  const beats = [...DB.storybeats].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h2 style="color:var(--acc)">Storyboard</h2><button class="btn primary" onclick="addStorybeat()">+ Beat</button></div>';
+  html += '<div class="story-timeline">';
+  for (const beat of beats) {
+    const cls = beat.type === 'cut' ? 'cut' : 'scene';
+    html += `<div class="story-beat ${cls}" onclick="editStorybeat('${beat.id}')">
+      <h4>${beat.type === 'cut' ? 'ðŸŽ¬' : 'ðŸŽ®'} ${beat.title || 'Untitled'}</h4>
+      <p>${beat.description || ''}</p>
+      <div class="story-refs">${(beat.gameRefs || []).map(r => `<span class="tag">${r}</span>`).join('')}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function addStorybeat() {
+  const beat = { title: 'Neuer Beat', description: '', type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: '' };
+  await api('/storybeats', 'POST', beat);
+  await loadDB();
+  renderStory();
+  toast('Storybeat erstellt');
+}
+
+function editStorybeat(id) {
+  const beat = DB.storybeats.find(b => b.id === id);
+  if (!beat) return;
+  // Open in detail panel
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  document.getElementById('detail-title').textContent = `ðŸŽ¬ ${beat.title}`;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-field"><label>Titel</label><input value="${beat.title || ''}" onchange="updateBeat('${id}','title',this.value)"></div>
+      <div class="detail-field"><label>Typ</label>
+        <select onchange="updateBeat('${id}','type',this.value)">
+          <option value="scene" ${beat.type === 'scene' ? 'selected' : ''}>Spielbare Szene</option>
+          <option value="cut" ${beat.type === 'cut' ? 'selected' : ''}>Video-Cut</option>
+        </select>
+      </div>
+      <div class="detail-field"><label>Reihenfolge</label><input type="number" value="${beat.order || 0}" onchange="updateBeat('${id}','order',parseInt(this.value))"></div>
+      <div class="detail-field"><label>Beschreibung</label><textarea rows="5" onchange="updateBeat('${id}','description',this.value)">${beat.description || ''}</textarea></div>
+      <div class="detail-field"><label>Game-Referenzen (kommagetrennt)</label><input value="${(beat.gameRefs || []).join(', ')}" onchange="updateBeat('${id}','gameRefs',this.value.split(',').map(s=>s.trim()).filter(Boolean))"></div>
+      <div class="detail-field"><label>Notizen</label><textarea rows="3" onchange="updateBeat('${id}','notes',this.value)">${beat.notes || ''}</textarea></div>
+      <button class="btn danger" style="margin-top:12px" onclick="deleteBeat('${id}')">ðŸ—‘ Beat lÃ¶schen</button>
+    </div>
+  `;
+}
+
+async function updateBeat(id, key, value) {
+  const beat = DB.storybeats.find(b => b.id === id);
+  if (!beat) return;
+  beat[key] = value;
+  await api('/storybeats/' + id, 'PUT', beat);
+  renderStory();
+}
+
+async function deleteBeat(id) {
+  if (!confirm('Beat lÃ¶schen?')) return;
+  await api('/storybeats/' + id, 'DELETE');
+  closeDetail();
+  await loadDB();
+  renderStory();
+}
+
+// â”€â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('graph-container').style.display = tab === 'systems' ? 'block' : 'none';
+  document.getElementById('story-view').style.display = tab === 'story' ? 'block' : 'none';
+  if (tab === 'story') renderStory();
+  if (tab === 'systems') { resizeCanvas(); renderGraph(); }
+}
+
+// â”€â”€â”€ CREATE MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function openCreateModal() {
+  document.getElementById('create-modal').classList.add('open');
+  const catSel = document.getElementById('new-cat');
+  catSel.innerHTML = ['VIS','ARCH','SRV','CLI','GAM','WLD','ART','METH','XREF'].map(c => `<option value="${c}">${c}</option>`).join('');
+}
+function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); }
+
+async function createEntry() {
+  const type = document.getElementById('new-type').value;
+  if (type === 'node') {
+    const node = {
+      categoryId: document.getElementById('new-cat').value,
+      refId: document.getElementById('new-refid').value.trim(),
+      title: document.getElementById('new-title').value.trim(),
+      description: document.getElementById('new-desc').value,
+      status: document.getElementById('new-status').value,
+      flags: document.getElementById('new-flags').value.split(',').map(s => s.trim()).filter(Boolean),
+      dependsOn: [], provides: [], emits: [], listensTo: [], codeSolution: '', connections: []
+    };
+    await api('/nodes', 'POST', node);
+    toast('Node erstellt: ' + node.refId);
+  } else {
+    const beat = {
+      title: document.getElementById('new-title').value.trim(),
+      description: document.getElementById('new-desc').value,
+      type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: ''
+    };
+    await api('/storybeats', 'POST', beat);
+    toast('Storybeat erstellt');
+  }
+  closeCreateModal();
+  await loadDB();
+}
+
+// â”€â”€â”€ TOAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// â”€â”€â”€ AGENT PANEL TOGGLE â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let agentPanelOpen = false;
+function toggleAgentPanel() {
+  agentPanelOpen = !agentPanelOpen;
+  document.getElementById('agent-panel').classList.toggle('open', agentPanelOpen);
+  document.body.classList.toggle('agent-open', agentPanelOpen);
+  resizeCanvas();
+}
+
+// â”€â”€â”€ SSE + AGENT TICKER â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let eventSource = null;
+
+function connectSSE() {
+  if (eventSource) eventSource.close();
+  eventSource = new EventSource('/api/events');
+
+  eventSource.addEventListener('agent.state', e => updateTicker(JSON.parse(e.data)));
+  eventSource.addEventListener('agent.tick', e => updateTicker(JSON.parse(e.data)));
+
+  eventSource.addEventListener('agent.activity', e => {
+    // Update file-glow state and re-render.
+    try {
+      const a = JSON.parse(e.data);
+      AGENT_ACTIVE_FILES = Array.isArray(a.activeFiles) ? a.activeFiles.map(normFile).filter(Boolean) : [];
+      AGENT_LAST_FILES = Array.isArray(a.lastFiles) ? a.lastFiles.map(normFile).filter(Boolean) : [];
+      AGENT_ACTIVE_REFS = Array.isArray(a.activeRefs) ? a.activeRefs.map(normFile).filter(Boolean) : [];
+      AGENT_LAST_REFS = Array.isArray(a.lastRefs) ? a.lastRefs.map(normFile).filter(Boolean) : [];
+    } catch {}
+    // DB neuladen â†’ Node/storybeat states aktualisieren + file-based glow anwenden
+    loadDB();
+  });
+
+  eventSource.addEventListener('agent.done', () => {
+    document.getElementById('chat-send-btn').disabled = false;
+  });
+
+  eventSource.addEventListener('agent.error', e => {
+    const data = JSON.parse(e.data);
+    appendChatMsg('assistant', 'FEHLER: ' + data.message, 'err_' + Date.now());
+    document.getElementById('chat-send-btn').disabled = false;
+  });
+
+  eventSource.addEventListener('chat.message', e => {
+    const msg = JSON.parse(e.data);
+    appendChatMsg(msg.role, msg.text, msg.id);
+  });
+
+  eventSource.addEventListener('chat.delta', e => {
+    const d = JSON.parse(e.data);
+    appendChatDelta(d.id, d.delta);
+  });
+
+  eventSource.addEventListener('db.changed', () => loadDB());
+
+  eventSource.onerror = () => setTimeout(connectSSE, 3000);
+}
+
+function updateTicker(s) {
+  const statusLine = document.getElementById('agent-status-line');
+  const taskEl = document.getElementById('agent-task');
+  const activeEl = document.getElementById('agent-active-refs');
+  const lastEl = document.getElementById('agent-last-refs');
+  const btn = document.getElementById('chat-send-btn');
+
+  if (s.busy) {
+    statusLine.className = 'busy';
+    statusLine.textContent = 'Agent arbeitet ... ' + (s.elapsedSec || 0) + 's';
+    btn.disabled = true;
+    if (s.currentTask) { taskEl.style.display = 'block'; taskEl.textContent = 'Task: ' + s.currentTask; }
+  } else {
+    statusLine.className = 'idle';
+    statusLine.textContent = 'Agent: idle';
+    taskEl.style.display = 'none';
+    btn.disabled = false;
+  }
+
+  if (s.activeRefs && s.activeRefs.length) {
+    activeEl.style.display = 'block';
+    activeEl.textContent = 'Aktiv: ' + s.activeRefs.join(', ');
+  } else { activeEl.style.display = 'none'; }
+
+  if (s.lastRefs && s.lastRefs.length) {
+    lastEl.style.display = 'block';
+    lastEl.textContent = 'Zuletzt: ' + s.lastRefs.join(', ');
+  } else { lastEl.style.display = 'none'; }
+}
+
+// â”€â”€â”€ CHAT â”€â”€â”€ NEU â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const btn = document.getElementById('chat-send-btn');
+  btn.disabled = true;
+  input.value = '';
+  try {
+    const resp = await fetch('/api/chat/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+    const data = await resp.json();
+    if (data.error) { alert('Agent: ' + data.error); btn.disabled = false; }
+    // Auto-open agent panel
+    if (!agentPanelOpen) toggleAgentPanel();
+  } catch (e) { alert('Fehler: ' + e.message); btn.disabled = false; }
+}
+
+function appendChatMsg(role, text, id) {
+  const box = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + role;
+  el.dataset.id = id || '';
+  el.textContent = text || '';
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendChatDelta(id, delta) {
+  const box = document.getElementById('chat-messages');
+  let el = box.querySelector('[data-id="' + id + '"]');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'chat-msg assistant';
+    el.dataset.id = id;
+    box.appendChild(el);
+  }
+  el.textContent += delta;
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadChatHistory() {
+  try {
+    const resp = await fetch('/api/chat/history');
+    const msgs = await resp.json();
+    for (const msg of msgs) appendChatMsg(msg.role, msg.text, msg.id);
+  } catch (e) { /* ignore */ }
+}
+
+// â”€â”€â”€ WORK-STATE GLOW â”€â”€â”€
+// Sidebar node items + category headers now get data-ws directly in renderSidebar().
+// Storybeat cards still need a tiny post-pass because they are generated from HTML.
+const _origRenderStory = renderStory;
+renderStory = function() {
+  _origRenderStory();
+  for (const beat of DB.storybeats) {
+    const ws = effectiveWorkStateForBeat(beat);
+    if (!ws || ws === 'idle') continue;
+    // Best-effort: match by id in onclick attribute
+    const card = document.querySelector(`.story-beat[onclick*="${beat.id}"]`);
+    if (card) card.dataset.ws = ws;
+  }
+};
+
+// â”€â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+loadDB();
+loadChatHistory();
+connectSSE();
+</script>
+</body>
+</html>
+

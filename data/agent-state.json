@@ -1,0 +1,11 @@
+{
+  "busy": false,
+  "startedAt": null,
+  "elapsedSec": 0,
+  "currentTask": null,
+  "activeRefs": [],
+  "lastRefs": [],
+  "activeFiles": [],
+  "lastFiles": [],
+  "lastError": null
+}

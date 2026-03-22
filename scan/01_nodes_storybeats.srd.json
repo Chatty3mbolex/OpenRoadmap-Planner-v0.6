@@ -1,0 +1,92 @@
+{
+  "_srd_version": "1.0",
+  "_source": "template",
+  "_description": "Template: Example nodes + storybeats + connections (generic, no project references).",
+
+  "nodes": [
+    {
+      "categoryId": "DEFAULT",
+      "refId": "DEFAULT-001",
+      "title": "DEFAULT",
+      "status": "OFFEN",
+      "description": "Template node. Replace with your own title/description.",
+      "flags": [],
+      "dependsOn": [],
+      "provides": [],
+      "emits": [],
+      "listensTo": [],
+      "codeSolution": ""
+    },
+    {
+      "categoryId": "TEMPLATE",
+      "refId": "TEMPLATE-001",
+      "title": "TEMPLATE",
+      "status": "OFFEN",
+      "description": "Template node. Replace with your own title/description.",
+      "flags": [],
+      "dependsOn": ["DEFAULT-001"],
+      "provides": [],
+      "emits": [],
+      "listensTo": [],
+      "codeSolution": ""
+    },
+    {
+      "categoryId": "DEFAULT",
+      "refId": "DEFAULT-002",
+      "title": "DEFAULT",
+      "status": "PRE-FORMULIERUNG",
+      "description": "Template node. Replace with your own title/description.",
+      "flags": [],
+      "dependsOn": ["DEFAULT-001", "TEMPLATE-001"],
+      "provides": [],
+      "emits": [],
+      "listensTo": [],
+      "codeSolution": ""
+    }
+  ],
+
+  "storybeats": [
+    {
+      "title": "DEFAULT",
+      "order": 0,
+      "type": "scene",
+      "act": 1,
+      "description": "Template storyboard entry. Replace with your own content.",
+      "gameRefs": ["DEFAULT-001"],
+      "notes": ""
+    },
+    {
+      "title": "TEMPLATE",
+      "order": 1,
+      "type": "cut",
+      "act": 1,
+      "description": "Template storyboard entry. Replace with your own content.",
+      "gameRefs": ["TEMPLATE-001"],
+      "notes": ""
+    }
+  ],
+
+  "connections": [
+    {
+      "fromId": "DEFAULT-001",
+      "toId": "TEMPLATE-001",
+      "type": "custom",
+      "label": "",
+      "arrowFlag": "to"
+    },
+    {
+      "fromId": "TEMPLATE-001",
+      "toId": "DEFAULT-002",
+      "type": "custom",
+      "label": "",
+      "arrowFlag": "from"
+    },
+    {
+      "fromId": "DEFAULT-002",
+      "toId": "DEFAULT-001",
+      "type": "custom",
+      "label": "",
+      "arrowFlag": "both"
+    }
+  ]
+}

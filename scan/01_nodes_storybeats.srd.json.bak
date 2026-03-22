@@ -1,0 +1,59 @@
+{
+  "_srd_version": "1.0",
+  "_source": "template",
+  "_description": "Blank template: nodes + storybeats + connections",
+
+  "nodes": [
+    {
+      "categoryId": "ARCH",
+      "refId": "ARCH-001",
+      "title": "Project Skeleton",
+      "status": "OFFEN",
+      "description": "Initial project scaffolding and conventions.",
+      "flags": ["is_core"],
+      "dependsOn": []
+    },
+    {
+      "categoryId": "SRV",
+      "refId": "SRV-001",
+      "title": "Game State Manager",
+      "status": "OFFEN",
+      "description": "Owns authoritative state and snapshots.",
+      "flags": ["is_core", "is_server"],
+      "dependsOn": ["ARCH-001"]
+    },
+    {
+      "categoryId": "CLI",
+      "refId": "CLI-001",
+      "title": "Client State Adapter",
+      "status": "OFFEN",
+      "description": "Receives server snapshots/events and feeds rendering/UI.",
+      "flags": ["is_client", "is_network"],
+      "dependsOn": ["SRV-001"]
+    }
+  ],
+
+  "storybeats": [
+    {
+      "act": 0,
+      "order": 0,
+      "title": "INTRO — Boot",
+      "type": "cut",
+      "description": "Short intro. Establish tone and goal.",
+      "gameRefs": ["VIS-001"]
+    },
+    {
+      "act": 0,
+      "order": 1,
+      "title": "FIRST PLAYABLE — Tutorial",
+      "type": "scene",
+      "description": "Teach core controls and one key loop.",
+      "gameRefs": ["GAM-001", "CLI-001"]
+    }
+  ],
+
+  "connections": [
+    { "fromId": "ARCH-001", "toId": "SRV-001", "type": "depends" },
+    { "fromId": "SRV-001",  "toId": "CLI-001", "type": "provides", "label": "snapshots/events" }
+  ]
+}

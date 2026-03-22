@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<!--
+  OpenRoadmap Planner — Web UI
+
+  SPDX-License-Identifier: GPL-3.0-or-later
+
+  Copyright (C) 2026 Rick Kühnreich (Embolex)
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+  Repository: https://github.com/Chatty3mbolex/OpenRoadmap-Planner-v0.6
+
+  Credits / Contributors:
+  - Rick Kühnreich (Embolex)
+  - OpenAI ChatGPT 5.2-codex (assistance)
+  - Anthropic Claude (assistance)
+-->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenRoadmap Planner</title>
+
+<style>
+/* ── RESET & TOKENS ────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#12151c;--bg3:#1a1e28;--bg4:#242934;
+  --tx:#c8cdd8;--tx2:#8b92a0;--tx3:#5c6370;
+  --acc:#00d4ff;--acc2:#7c3aed;--acc3:#f59e0b;--acc4:#10b981;--acc5:#ef4444;--acc6:#ec4899;
+  --border:#2a2f3a;
+  --radius:6px;--radius2:10px;
+  --mono:'Cascadia Code','JetBrains Mono','Fira Code',monospace;
+  --sans:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --transition:0.2s ease;
+}
+html{font-size:13px}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+a{color:var(--acc);text-decoration:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--tx3)}
+
+/* ── HEADER ────────────────────────────────── */
+#header{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;gap:16px;z-index:100;flex-shrink:0}
+#header h1{font-size:1.1rem;font-weight:700;color:var(--acc);letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap}
+#header .sep{width:1px;height:20px;background:var(--border)}
+.tab-bar{display:flex;gap:2px}
+.tab{padding:6px 14px;border-radius:var(--radius) var(--radius) 0 0;cursor:pointer;font-size:0.85rem;font-weight:500;color:var(--tx2);border:1px solid transparent;border-bottom:none;transition:var(--transition)}
+.tab:hover{color:var(--tx);background:var(--bg3)}
+.tab.active{color:var(--acc);background:var(--bg);border-color:var(--border)}
+.header-actions{margin-left:auto;display:flex;gap:8px}
+.btn{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg3);color:var(--tx);cursor:pointer;font-size:0.8rem;font-family:var(--sans);transition:var(--transition)}
+.btn:hover{background:var(--bg4);border-color:var(--tx3)}
+.btn.primary{background:var(--acc);color:var(--bg);border-color:var(--acc);font-weight:600}
+.btn.primary:hover{opacity:0.85}
+.btn.danger{border-color:var(--acc5);color:var(--acc5)}
+.btn.danger:hover{background:var(--acc5);color:#fff}
+
+/* ── MAIN LAYOUT ───────────────────────────── */
+#main{flex:1;display:flex;overflow:hidden}
+#sidebar{width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+#content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#detail-panel{width:420px;min-width:420px;background:var(--bg2);border-left:1px solid var(--border);display:none;flex-direction:column;overflow:hidden}
+#detail-panel.open{display:flex}
+
+/* ── SIDEBAR ───────────────────────────────── */
+.sidebar-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-header input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:5px 8px;font-size:0.85rem;font-family:var(--sans);outline:none}
+.sidebar-header input:focus{border-color:var(--acc)}
+.cat-list{flex:1;overflow-y:auto;padding:4px 0}
+.cat-group{margin-bottom:2px}
+.cat-header{padding:6px 12px;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.cat-header:hover{color:var(--tx2)}
+.cat-header .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cat-header .count{margin-left:auto;font-weight:400;font-size:0.72rem;opacity:0.6}
+.cat-header .arrow{font-size:0.65rem;transition:transform 0.15s}
+.cat-header.collapsed .arrow{transform:rotate(-90deg)}
+.cat-nodes{padding:0}
+.cat-nodes.hidden{display:none}
+.node-item{padding:5px 12px 5px 28px;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:var(--transition);border-left:2px solid transparent}
+.node-item:hover{background:var(--bg3)}
+.node-item.selected{background:var(--bg3);border-left-color:var(--acc);color:var(--acc)}
+.node-item .status{font-size:0.65rem;padding:1px 5px;border-radius:3px;font-weight:600;white-space:nowrap}
+.status-decided{background:#10b98122;color:var(--acc4)}
+.status-open{background:#f59e0b22;color:var(--acc3)}
+.status-pre{background:#7c3aed22;color:var(--acc2)}
+
+/* ── GRAPH VIEW ────────────────────────────── */
+#graph-container{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+#graph-canvas{width:100%;height:100%}
+.graph-controls{position:absolute;bottom:12px;right:12px;display:flex;gap:4px}
+
+/* ── DETAIL PANEL ──────────────────────────── */
+.detail-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.detail-header h2{font-size:1rem;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-close{cursor:pointer;color:var(--tx3);font-size:1.2rem;padding:2px 6px}
+.detail-close:hover{color:var(--tx)}
+.detail-body{flex:1;overflow-y:auto;padding:16px}
+.detail-section{margin-bottom:16px}
+.detail-section h3{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--tx3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.detail-field{margin-bottom:10px}
+.detail-field label{display:block;font-size:0.75rem;color:var(--tx3);margin-bottom:3px;font-weight:500}
+.detail-field input,.detail-field textarea,.detail-field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);color:var(--tx);padding:6px 8px;font-size:0.85rem;font-family:var(--sans);outline:none;resize:vertical}
+.detail-field input:focus,.detail-field textarea:focus,.detail-field select:focus{border-color:var(--acc)}
+.detail-field textarea{min-height:60px;font-family:var(--mono);font-size:0.8rem}
+.code-solution{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;font-family:var(--mono);font-size:0.8rem;min-height:80px;color:var(--acc3)}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px}
+.tag{padding:2px 8px;border-radius:3px;font-size:0.72rem;font-weight:500;border:1px solid var(--border);cursor:pointer;transition:var(--transition)}
+.tag:hover{border-color:var(--acc)}
+.tag.active{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.conn-list{list-style:none}
+.conn-list li{padding:4px 0;font-size:0.82rem;display:flex;align-items:center;gap:6px;cursor:pointer}
+.conn-list li:hover{color:var(--acc)}
+.conn-type{font-size:0.65rem;padding:1px 5px;border-radius:3px;font-weight:600;background:var(--bg4)}
+
+/* ── STORY TAB ─────────────────────────────── */
+#story-view{display:none;flex:1;overflow-y:auto;padding:20px}
+.story-timeline{position:relative;padding-left:30px}
+.story-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border)}
+.story-beat{position:relative;margin-bottom:16px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);cursor:pointer;transition:var(--transition)}
+.story-beat:hover{border-color:var(--acc);transform:translateX(4px)}
+.story-beat::before{content:'';position:absolute;left:-23px;top:16px;width:10px;height:10px;border-radius:50%;border:2px solid var(--acc);background:var(--bg)}
+.story-beat.cut{border-left:3px solid var(--acc6)}
+.story-beat.cut::before{background:var(--acc6);border-color:var(--acc6)}
+.story-beat.scene{border-left:3px solid var(--acc4)}
+.story-beat.scene::before{background:var(--acc4);border-color:var(--acc4)}
+.story-beat h4{font-size:0.9rem;margin-bottom:4px}
+.story-beat p{font-size:0.8rem;color:var(--tx2);line-height:1.4}
+.story-refs{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+/* ── MODAL ─────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);width:520px;max-height:80vh;overflow-y:auto;padding:20px}
+.modal h2{font-size:1rem;margin-bottom:16px;color:var(--acc)}
+
+/* ── TOAST ─────────────────────────────────── */
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--acc);color:var(--bg);padding:8px 20px;border-radius:var(--radius);font-weight:600;font-size:0.85rem;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:300}
+#toast.show{opacity:1}
+
+/* ── AGENT PANEL (Chat + Ticker) ─── NEU ────── */
+/* Agent panel width is dynamic (resizable). */
+:root{--agentW:340px}
+body.agent-open #main{margin-right:var(--agentW)}
+/* When the agent panel is open, keep the header controls visible by reserving space on the right. */
+body.agent-open #header{padding-right:calc(var(--agentW) + 16px)}
+#agent-panel{position:fixed;right:0;top:0;width:var(--agentW);min-width:280px;max-width:720px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;z-index:150;transform:translateX(100%);transition:transform .25s ease;resize:horizontal;overflow:auto}
+#agent-panel.open{transform:translateX(0)}
+#agent-ticker{padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:.75rem;line-height:1.6;font-family:var(--mono)}
+#agent-ticker .busy{color:var(--acc3);font-weight:700}
+#agent-ticker .idle{color:var(--tx3)}
+#agent-ticker .active-refs{color:var(--acc4);margin-top:2px}
+#agent-ticker .last-refs{color:var(--tx3);margin-top:2px}
+#chat-messages{flex:1;overflow-y:auto;padding:8px}
+.chat-msg{margin-bottom:6px;padding:6px 10px;border-radius:var(--radius);font-size:.8rem;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.chat-msg.user{background:#1e3a5f;border-left:3px solid #3b82f6}
+.chat-msg.assistant{background:#1a2e1a;border-left:3px solid var(--acc4)}
+#chat-input-bar{display:flex;padding:6px;background:var(--bg);border-top:1px solid var(--border);gap:4px}
+#chat-input{flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-size:.82rem;font-family:var(--sans);outline:none;resize:none;min-height:3.2em;line-height:1.35}
+#chat-input:focus{border-color:var(--acc)}
+#chat-send-btn{background:var(--acc);color:var(--bg);border:none;border-radius:var(--radius);padding:6px 14px;cursor:pointer;font-size:.8rem;font-weight:600}
+#chat-send-btn:hover{opacity:.85}
+#chat-send-btn:disabled{background:var(--bg4);cursor:not-allowed;color:var(--tx3)}
+
+/* ── WORK-STATE GLOW ─── NEU ────── */
+.node-item[data-ws="active"]{background:rgba(245,158,11,.12)!important;border-left-color:var(--acc3)!important}
+.node-item[data-ws="last"]{background:rgba(107,114,128,.08)!important;border-left-color:var(--tx3)!important;border-left-style:dashed!important}
+.story-beat[data-ws="active"]{box-shadow:0 0 10px 3px rgba(245,158,11,.5);border-color:var(--acc3)!important}
+.story-beat[data-ws="last"]{box-shadow:0 0 6px 2px rgba(107,114,128,.3);border-color:var(--tx3)!important;border-style:dashed!important}
+
+/* ── CATEGORY WORK-STATE GLOW ─── NEU ────── */
+.cat-header[data-ws="active"]{color:var(--acc3)!important}
+.cat-header[data-ws="active"] .dot{box-shadow:0 0 10px 3px rgba(245,158,11,.75)}
+.cat-header[data-ws="last"]{color:var(--tx2)!important}
+.cat-header[data-ws="last"] .dot{box-shadow:0 0 8px 2px rgba(107,114,128,.6)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1 id="roadmap-name">OpenRoadmap Planner</h1>
+  <div class="sep"></div>
+  <div class="tab-bar">
+    <div class="tab active" data-tab="systems" onclick="switchTab('systems')">Systeme</div>
+    <div class="tab" data-tab="story" onclick="switchTab('story')">Storyboard</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="openNameModal()">Change Roadmap Name</button>
+    <button class="btn" onclick="openCategoriesModal()">Edit Categories</button>
+    <button class="btn" onclick="triggerScan()">⟳ Scan</button>
+    <button class="btn primary" onclick="openCreateModal()">+ Neu</button>
+    <button class="btn" onclick="exportDB()">↓ Export</button>
+    <button class="btn" id="agent-toggle" onclick="toggleAgentPanel()">🤖 Agent</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <input type="text" id="search" placeholder="Suche..." oninput="filterNodes()">
+    </div>
+    <div id="cat-list" class="cat-list"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+    <div id="graph-container">
+      <canvas id="graph-canvas"></canvas>
+      <div class="graph-controls">
+        <button class="btn" onclick="zoomGraph(1.2)">+</button>
+        <button class="btn" onclick="zoomGraph(0.8)">-</button>
+        <button class="btn" onclick="resetGraph()">⊙</button>
+      </div>
+    </div>
+    <div id="story-view"></div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div id="detail-panel">
+    <div class="detail-header">
+      <h2 id="detail-title">-</h2>
+      <span class="detail-close" onclick="closeDetail()">✕</span>
+    </div>
+    <div id="detail-body" class="detail-body"></div>
+  </div>
+</div>
+
+<!-- NAME MODAL -->
+<div class="modal-overlay" id="name-modal">
+  <div class="modal" style="width:520px">
+    <h2>Change Roadmap Name</h2>
+    <div style="font-size:0.82rem;color:var(--tx2);line-height:1.4;margin-bottom:12px">
+      This changes the name shown in the header and browser tab.
+    </div>
+
+    <div class="detail-field">
+      <label>Roadmap Name</label>
+      <input id="name-input" placeholder="OpenRoadmap Planner">
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" onclick="closeNameModal()">Cancel</button>
+      <button class="btn primary" onclick="saveRoadmapName()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECTION FLAGGER MODAL -->
+<div class="modal-overlay" id="conn-flagger-modal">
+  <div class="modal" style="width:560px">
+    <h2>Connection Arrow Flags</h2>
+    <div style="font-size:0.82rem;color:var(--tx2);line-height:1.4;margin-bottom:12px">
+      This flag controls <b>only</b> the arrows on highlighted lines.
+      Values: <b>To</b>, <b>From</b>, <b>Both</b>, <b>Unspecified</b> (Both/Unspecified draw no arrows).
+    </div>
+
+    <div class="detail-field">
+      <label>Origin (fixed)</label>
+      <input id="cf-origin" disabled>
+    </div>
+
+    <div class="detail-field">
+      <label>Target</label>
+      <select id="cf-target"></select>
+    </div>
+
+    <div class="detail-field">
+      <label>Type</label>
+      <select id="cf-type">
+        <option value="depends">depends</option>
+        <option value="provides">provides</option>
+        <option value="emits">emits</option>
+        <option value="listens">listens</option>
+        <option value="custom">custom</option>
+      </select>
+    </div>
+
+    <div class="detail-field">
+      <label>Arrow Flag</label>
+      <select id="cf-arrow">
+        <option value="unspecified">Unspecified (no arrows)</option>
+        <option value="both">Both (no arrows)</option>
+        <option value="to">To (Origin → Target)</option>
+        <option value="from">From (Target → Origin)</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" onclick="closeConnFlagger()">Cancel</button>
+      <button class="btn primary" onclick="saveConnFlagger()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORIES MODAL -->
+<div class="modal-overlay" id="categories-modal">
+  <div class="modal" style="width:960px">
+    <h2>Edit Categories</h2>
+    <div style="font-size:0.82rem;color:var(--tx2);line-height:1.4;margin-bottom:12px">
+      Configure the left sidebar groups. Order matters.
+      Each category controls: <b>id</b>, display <b>name</b>, <b>prefix</b> (for REF-IDs like <code>PREFIX-001</code>), and <b>color</b>.
+    </div>
+
+    <div id="categories-editor"></div>
+
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:14px;align-items:center">
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="categoriesAddRow()">+ Add</button>
+        <button class="btn danger" onclick="categoriesResetFromDB()">Reset</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="closeCategoriesModal()">Close</button>
+        <button class="btn primary" onclick="saveCategories()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <h2>Neuer Eintrag</h2>
+    <div class="detail-field"><label>Typ</label>
+      <select id="new-type"><option value="node">System-Node</option><option value="storybeat">Storybeat</option></select>
+    </div>
+    <div class="detail-field"><label>Kategorie</label><select id="new-cat"></select></div>
+    <div class="detail-field"><label>REF-ID (z.B. GAM-015)</label><input id="new-refid"></div>
+    <div class="detail-field"><label>Titel</label><input id="new-title"></div>
+    <div class="detail-field"><label>Beschreibung</label><textarea id="new-desc" rows="3"></textarea></div>
+    <div class="detail-field"><label>Status</label>
+      <select id="new-status"><option value="OFFEN">OFFEN</option><option value="ENTSCHIEDEN">ENTSCHIEDEN</option><option value="PRE-FORMULIERUNG">PRE-FORMULIERUNG</option></select>
+    </div>
+    <div class="detail-field"><label>Flags (kommagetrennt)</label><input id="new-flags" placeholder="is_item, is_module, is_weapon..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn" onclick="closeCreateModal()">Abbrechen</button>
+      <button class="btn primary" onclick="createEntry()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- AGENT PANEL (Chat + Ticker) ─── NEU -->
+<div id="agent-panel">
+  <div id="agent-ticker">
+    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+      <div id="agent-status-line" class="idle">Agent: idle</div>
+      <button class="btn danger" id="agent-cancel-btn" onclick="cancelAgent()" style="padding:3px 10px;display:none">Cancel</button>
+    </div>
+    <div id="agent-task" style="display:none"></div>
+    <div id="agent-active-refs" class="active-refs" style="display:none"></div>
+    <div id="agent-last-refs" class="last-refs" style="display:none"></div>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-bar">
+    <textarea id="chat-input" rows="3" placeholder="Nachricht an Agent... (Enter = senden, Shift+Enter = neue Zeile)"></textarea>
+    <button id="chat-send-btn" onclick="sendChat()">Senden</button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────
+let DB = { categories: [], nodes: [], storybeats: [], connections: [], flags: [], meta: {} };
+let selectedNode = null;
+let graphState = { zoom: 1, panX: 0, panY: 0, dragging: false, dragStart: null, nodePositions: {} };
+let currentTab = 'systems';
+
+// Agent-driven file glow (server sends activeFiles + lastFiles)
+let AGENT_ACTIVE_FILES = [];
+let AGENT_LAST_FILES = [];
+let AGENT_ACTIVE_REFS = [];
+let AGENT_LAST_REFS = [];
+
+// Connection highlighting: we highlight connections for
+// 1) the currently selected node
+// 2) nodes the agent is actively working on (by refId)
+// If there are no connections for these refs, nothing special is drawn.
+function getHighlightedRefs() {
+  const refs = new Set();
+
+  // Selected node (prefer refId, fall back to id)
+  if (selectedNode) {
+    const r = String(selectedNode.refId || '').trim();
+    const id = String(selectedNode.id || '').trim();
+    if (r) refs.add(r);
+    if (id) refs.add(id);
+  }
+
+  // Agent active refs
+  for (const r of (AGENT_ACTIVE_REFS || [])) {
+    const t = String(r || '').trim();
+    if (t) refs.add(t);
+  }
+
+  return refs;
+}
+
+function connIsHighlighted(conn, highlightedRefs) {
+  if (!conn || !highlightedRefs || highlightedRefs.size === 0) return false;
+  const from = String(conn.fromId || '').trim();
+  const to = String(conn.toId || '').trim();
+  return (from && highlightedRefs.has(from)) || (to && highlightedRefs.has(to));
+}
+
+function getPrimarySelectedKey() {
+  // Used for direction coloring (incoming/outgoing) when a node is selected.
+  if (!selectedNode) return '';
+  return String(selectedNode.refId || selectedNode.id || '').trim();
+}
+
+function normFile(x) {
+  return String(x || '').trim();
+}
+
+function effectiveWorkStateForNode(node) {
+  const ref = normFile(node?.refId);
+  if (ref) {
+    if (AGENT_ACTIVE_REFS.includes(ref)) return 'active';
+    if (AGENT_LAST_REFS.includes(ref)) return 'last';
+  }
+  const f = normFile(node?.sourceFile);
+  if (f) {
+    if (AGENT_ACTIVE_FILES.includes(f)) return 'active';
+    if (AGENT_LAST_FILES.includes(f)) return 'last';
+  }
+  return node?.workState || 'idle';
+}
+
+function effectiveWorkStateForBeat(beat) {
+  const f = normFile(beat?.sourceFile);
+  if (f) {
+    if (AGENT_ACTIVE_FILES.includes(f)) return 'active';
+    if (AGENT_LAST_FILES.includes(f)) return 'last';
+  }
+  return beat?.workState || 'idle';
+}
+
+// ─── API ───────────────────────────────────────
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch('/api' + path, opts);
+  return res.json();
+}
+
+async function loadDB() {
+  DB = await api('/db');
+
+  // Apply project name (server-configurable) to header + browser tab.
+  const projectName = String(DB?.meta?.projectName || 'OpenRoadmap Planner').trim();
+  document.title = projectName;
+  const nameEl = document.getElementById('roadmap-name');
+  if (nameEl) nameEl.textContent = projectName;
+
+  renderSidebar();
+  renderGraph();
+  if (currentTab === 'story') renderStory();
+}
+
+async function triggerScan() {
+  const r = await api('/scan', 'POST');
+  toast(`Scan: ${r.files} Dateien, +${r.totalAdded} neu, ~${r.totalUpdated} aktualisiert`);
+  await loadDB();
+}
+
+function exportDB() { window.open('/api/export'); }
+
+// ─── SIDEBAR ───────────────────────────────────
+function renderSidebar() {
+  const catList = document.getElementById('cat-list');
+  const search = document.getElementById('search').value.toLowerCase();
+
+  // Group nodes by category
+  const groups = {};
+  for (const node of DB.nodes) {
+    const catId = node.categoryId || 'uncategorized';
+    if (!groups[catId]) groups[catId] = [];
+    if (search && !node.title?.toLowerCase().includes(search) && !node.refId?.toLowerCase().includes(search)) continue;
+    groups[catId].push(node);
+  }
+
+  // Categories are configured via DB.categories (loaded from scan/*.srd.json and stored in data/roadmap.json).
+  // The left list groups nodes by category configuration (order, name, color, prefix).
+  const categories = Array.isArray(DB.categories) ? DB.categories : [];
+  const categoryPrefixById = new Map();
+  const categoryColorById = new Map();
+  const categoryNameById = new Map();
+  for (const c of categories) {
+    const id = String(c?.id || '').trim();
+    if (!id) continue;
+    categoryPrefixById.set(id, String(c?.prefix || c?.id || '').trim());
+    categoryColorById.set(id, String(c?.color || '#888'));
+    categoryNameById.set(id, String(c?.name || id));
+  }
+
+  // Helper: does a node belong to a category?
+  function nodeInCategory(node, catId) {
+    if (!node || !catId) return false;
+    if (node.categoryId === catId) return true;
+    const p = categoryPrefixById.get(catId);
+    return !!(p && node.refId && node.refId.startsWith(p + '-'));
+  }
+
+  let html = '';
+
+  // Render configured categories in configured order.
+  for (const c of categories) {
+    const catId = String(c?.id || '').trim();
+    if (!catId) continue;
+
+    const prefix = categoryPrefixById.get(catId) || catId;
+    const name = categoryNameById.get(catId) || catId;
+    const color = categoryColorById.get(catId) || '#888';
+
+    // Collect nodes that match either categoryId or prefix.
+    let nodes = DB.nodes.filter(n => nodeInCategory(n, catId));
+
+    if (search) {
+      nodes = nodes.filter(n => n.title?.toLowerCase().includes(search) || n.refId?.toLowerCase().includes(search));
+      if (nodes.length === 0) continue;
+    }
+
+    const displayNodes = nodes;
+
+    // Category work-state = aggregated from effective node states.
+    // Priority: active > last > idle
+    let catWs = '';
+    if (displayNodes.some(n => effectiveWorkStateForNode(n) === 'active')) catWs = 'active';
+    else if (displayNodes.some(n => effectiveWorkStateForNode(n) === 'last')) catWs = 'last';
+
+    // Header shows configured prefix/id + configured name.
+    html += `<div class="cat-group">
+      <div class="cat-header" data-ws="${catWs}" onclick="toggleCat(this)" style="color:${color}">
+        <span class="arrow">▼</span><span class="dot" style="background:${color}"></span>
+        ${prefix} <span style="opacity:0.6;font-weight:500">${name ? '— ' + name : ''}</span>
+        <span class="count">${displayNodes.length}</span>
+      </div>
+      <div class="cat-nodes">`;
+
+    for (const n of displayNodes) {
+      const statusCls = n.status === 'ENTSCHIEDEN' ? 'status-decided' : n.status === 'PRE-FORMULIERUNG' ? 'status-pre' : 'status-open';
+      const sel = selectedNode?.id === n.id ? 'selected' : '';
+      const ws = effectiveWorkStateForNode(n);
+      html += `<div class="node-item ${sel}" data-ws="${ws}" onclick="selectNode('${n.id}')">
+        <span class="status ${statusCls}">${n.status?.[0] || '?'}</span>
+        <span style="opacity:0.5;font-size:0.72rem">${n.refId || ''}</span>
+        ${n.title || 'Untitled'}
+      </div>`;
+    }
+
+    html += '</div></div>';
+  }
+
+  // Uncategorized: nodes that match no configured category.
+  const uncategorized = DB.nodes.filter(n => {
+    return !categories.some(c => nodeInCategory(n, String(c?.id || '').trim()));
+  }).filter(n => {
+    if (!search) return true;
+    return n.title?.toLowerCase().includes(search) || n.refId?.toLowerCase().includes(search);
+  });
+
+  if (uncategorized.length > 0) {
+    html += `<div class="cat-group"><div class="cat-header" onclick="toggleCat(this)"><span class="arrow">▼</span><span class="dot" style="background:#666"></span>OTHER <span class="count">${uncategorized.length}</span></div><div class="cat-nodes">`;
+    for (const n of uncategorized) {
+      html += `<div class="node-item" onclick="selectNode('${n.id}')">${n.refId ? (n.refId + ' — ') : ''}${n.title || n.id}</div>`;
+    }
+    html += '</div></div>';
+  }
+
+  catList.innerHTML = html;
+}
+
+function filterNodes() { renderSidebar(); }
+function toggleCat(el) { el.classList.toggle('collapsed'); el.nextElementSibling.classList.toggle('hidden'); }
+
+// ─── CATEGORY CONFIG EDITOR (UI) ─────────────────────────────
+let CATEGORY_EDIT_STATE = [];
+
+function openCategoriesModal() {
+  categoriesResetFromDB();
+  document.getElementById('categories-modal').classList.add('open');
+}
+
+function closeCategoriesModal() {
+  document.getElementById('categories-modal').classList.remove('open');
+}
+
+function categoriesResetFromDB() {
+  const cats = Array.isArray(DB.categories) ? DB.categories : [];
+  // Clone to avoid mutating DB until save.
+  CATEGORY_EDIT_STATE = cats.map(c => ({
+    id: String(c?.id || '').trim(),
+    name: String(c?.name || '').trim(),
+    prefix: String(c?.prefix || '').trim(),
+    color: String(c?.color || '#888').trim(),
+    description: String(c?.description || '').trim()
+  })).filter(c => c.id);
+
+  // If no categories exist yet, start with a minimal template.
+  if (!CATEGORY_EDIT_STATE.length) {
+    CATEGORY_EDIT_STATE = [{ id: 'DEFAULT', name: 'Default', prefix: 'DEFAULT', color: '#00d4ff', description: '' }];
+  }
+
+  renderCategoriesEditor();
+}
+
+function categoriesAddRow() {
+  CATEGORY_EDIT_STATE.push({ id: 'TEMPLATE', name: 'Template', prefix: 'TEMPLATE', color: '#888', description: '' });
+  renderCategoriesEditor();
+}
+
+function categoriesRemoveRow(idx) {
+  CATEGORY_EDIT_STATE.splice(idx, 1);
+  renderCategoriesEditor();
+}
+
+function categoriesUpdate(idx, key, value) {
+  if (!CATEGORY_EDIT_STATE[idx]) return;
+  CATEGORY_EDIT_STATE[idx][key] = String(value ?? '').trim();
+}
+
+function renderCategoriesEditor() {
+  const host = document.getElementById('categories-editor');
+  const rows = CATEGORY_EDIT_STATE;
+
+  let html = '';
+  html += `<div style="display:grid;grid-template-columns: 120px 2.52fr 140px 140px 1.8fr 64px;gap:10px;align-items:end;font-size:0.78rem;color:var(--tx3);padding:6px 2px">
+    <div>ID</div><div>Name</div><div>Prefix</div><div>Color</div><div>Description</div><div></div>
+  </div>`;
+
+  for (let i = 0; i < rows.length; i++) {
+    const c = rows[i];
+    const safeId = (c.id || '').replace(/"/g, '&quot;');
+    const safeName = (c.name || '').replace(/"/g, '&quot;');
+    const safePrefix = (c.prefix || '').replace(/"/g, '&quot;');
+    const safeColor = (c.color || '').replace(/"/g, '&quot;');
+    const safeDesc = (c.description || '').replace(/"/g, '&quot;');
+
+    html += `<div style="display:grid;grid-template-columns: 120px 2.52fr 140px 140px 1.8fr 64px;gap:10px;align-items:center;margin-bottom:8px">
+      <input value="${safeId}" oninput="categoriesUpdate(${i},'id',this.value)" placeholder="DEFAULT" />
+      <input value="${safeName}" oninput="categoriesUpdate(${i},'name',this.value)" placeholder="Default" />
+      <input value="${safePrefix}" oninput="categoriesUpdate(${i},'prefix',this.value)" placeholder="DEFAULT" />
+      <input value="${safeColor}" oninput="categoriesUpdate(${i},'color',this.value)" placeholder="#00d4ff" />
+      <input value="${safeDesc}" oninput="categoriesUpdate(${i},'description',this.value)" placeholder="..." />
+      <button class="btn danger" onclick="categoriesRemoveRow(${i})">✕</button>
+    </div>`;
+  }
+
+  host.innerHTML = html;
+}
+
+async function saveCategories() {
+  // Validate
+  const cats = (CATEGORY_EDIT_STATE || []).map(c => ({
+    id: String(c.id || '').trim(),
+    name: String(c.name || '').trim(),
+    prefix: String(c.prefix || '').trim(),
+    color: String(c.color || '#888').trim(),
+    description: String(c.description || '').trim()
+  })).filter(c => c.id);
+
+  const ids = new Set();
+  for (const c of cats) {
+    if (!c.id) { alert('Category id is required'); return; }
+    if (ids.has(c.id)) { alert('Duplicate category id: ' + c.id); return; }
+    ids.add(c.id);
+    if (!c.prefix) c.prefix = c.id;
+    if (!c.name) c.name = c.id;
+  }
+
+  const resp = await api('/categories', 'PUT', cats);
+  if (resp && resp.error) {
+    alert('Save failed: ' + resp.error);
+    return;
+  }
+
+  toast('Categories saved');
+  await loadDB();
+  closeCategoriesModal();
+}
+
+// ─── ROADMAP NAME (UI) ─────────────────────────────
+function openNameModal() {
+  const modal = document.getElementById('name-modal');
+  const input = document.getElementById('name-input');
+  const current = String(DB?.meta?.projectName || 'OpenRoadmap Planner').trim();
+  if (input) input.value = current;
+  if (modal) modal.classList.add('open');
+}
+
+function closeNameModal() {
+  const modal = document.getElementById('name-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+async function saveRoadmapName() {
+  const input = document.getElementById('name-input');
+  const name = String(input?.value || '').trim();
+  if (!name) { alert('Name must not be empty'); return; }
+
+  const resp = await api('/meta', 'PUT', { projectName: name });
+  if (resp && resp.error) {
+    alert('Save failed: ' + resp.error);
+    return;
+  }
+
+  toast('Name saved');
+  await loadDB();
+  closeNameModal();
+}
+
+// ─── GRAPH RENDERING ───────────────────────────
+const canvas = document.getElementById('graph-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  renderGraph();
+}
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 100);
+
+function layoutNodes() {
+  // Use configured categories for layout columns (order + colors).
+  const categories = Array.isArray(DB.categories) ? DB.categories : [];
+  const prefixById = new Map();
+  const colorById = new Map();
+  for (const c of categories) {
+    const id = String(c?.id || '').trim();
+    if (!id) continue;
+    prefixById.set(id, String(c?.prefix || c?.id || '').trim());
+    colorById.set(id, String(c?.color || '#888'));
+  }
+
+  function nodeCategoryId(node) {
+    // Prefer explicit categoryId; fall back to prefix match.
+    const explicit = String(node?.categoryId || '').trim();
+    if (explicit) return explicit;
+    const p = String(node?.refId || '').split('-')[0];
+    if (!p) return 'OTHER';
+    // Find category by prefix
+    for (const c of categories) {
+      const id = String(c?.id || '').trim();
+      if (!id) continue;
+      const cp = prefixById.get(id) || id;
+      if (cp === p) return id;
+    }
+    return 'OTHER';
+  }
+
+  const groups = {};
+  for (const n of DB.nodes) {
+    const catId = nodeCategoryId(n);
+    if (!groups[catId]) groups[catId] = [];
+    groups[catId].push(n);
+  }
+
+  const positions = {};
+  let colIdx = 0;
+
+  // Vertical layout: alternate columns are shifted down by half a step.
+  // This makes points visually interleave (normal | lower | normal | lower ...).
+  const baseY = 60;
+  const rowStep = 50;
+  const colOffset = rowStep / 2;
+
+  // Configured category columns (left-to-right in configured order).
+  // Empty categories are skipped in the graph layout. If a category later gets nodes,
+  // it will automatically appear at its original relative position.
+  for (const c of categories) {
+    const catId = String(c?.id || '').trim();
+    if (!catId) continue;
+    const nodes = groups[catId] || [];
+
+    // Skip empty categories in the graph.
+    if (!nodes.length) continue;
+
+    const yShift = (colIdx % 2 === 1) ? colOffset : 0;
+
+    for (let i = 0; i < nodes.length; i++) {
+      positions[nodes[i].id] = {
+        x: 120 + colIdx * 160,
+        y: baseY + yShift + i * rowStep,
+        color: colorById.get(catId) || '#888',
+        prefix: prefixById.get(catId) || catId
+      };
+    }
+    colIdx++;
+  }
+
+  // Any remaining nodes (no configured category)
+  const otherNodes = groups['OTHER'] || [];
+  if (otherNodes.length) {
+    const yShift = (colIdx % 2 === 1) ? colOffset : 0;
+    for (let i = 0; i < otherNodes.length; i++) {
+      positions[otherNodes[i].id] = {
+        x: 120 + colIdx * 160,
+        y: baseY + yShift + i * rowStep,
+        color: '#888',
+        prefix: 'OTHER'
+      };
+    }
+  }
+
+  graphState.nodePositions = positions;
+}
+
+function renderGraph() {
+  if (!canvas.width) return;
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.translate(graphState.panX, graphState.panY);
+  ctx.scale(graphState.zoom, graphState.zoom);
+
+  layoutNodes();
+  const pos = graphState.nodePositions;
+
+  // Draw category headers in the same left-to-right order as the graph columns.
+  // Empty categories are skipped (no column, no header).
+  {
+    const categories = Array.isArray(DB.categories) ? DB.categories : [];
+
+    function categoryHasNodes(cat) {
+      const id = String(cat?.id || '').trim();
+      if (!id) return false;
+      const prefix = String(cat?.prefix || id).trim();
+      return (DB.nodes || []).some(n => {
+        if (!n) return false;
+        if (String(n.categoryId || '').trim() === id) return true;
+        return !!(prefix && n.refId && n.refId.startsWith(prefix + '-'));
+      });
+    }
+
+    let colIdx = 0;
+    for (const c of categories) {
+      if (!categoryHasNodes(c)) continue;
+
+      const id = String(c?.id || '').trim();
+      if (!id) continue;
+      const prefix = String(c?.prefix || id).trim();
+      const name = String(c?.name || '').trim();
+      const color = String(c?.color || '#888');
+
+      const x = 120 + colIdx * 160;
+      const y = 28;
+
+      ctx.save();
+      ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.95;
+      ctx.fillText(prefix, x - 6, y);
+      if (name) {
+        ctx.fillStyle = 'rgba(200,205,216,0.55)';
+        ctx.fillText(name, x - 6, y + 14);
+      }
+      ctx.restore();
+
+      colIdx++;
+    }
+
+    // "OTHER" column label if there are nodes not matching any configured category.
+    const hasOther = (DB.nodes || []).some(n => {
+      const catId = String(n?.categoryId || '').trim();
+      if (catId) return !categories.some(c => String(c?.id || '').trim() === catId);
+      const refPrefix = String(n?.refId || '').split('-')[0];
+      if (!refPrefix) return true;
+      return !categories.some(c => (String(c?.prefix || c?.id || '').trim() === refPrefix));
+    });
+    if (hasOther) {
+      const x = 120 + colIdx * 160;
+      const y = 28;
+      ctx.save();
+      ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+      ctx.fillStyle = 'rgba(200,205,216,0.45)';
+      ctx.fillText('OTHER', x - 6, y);
+      ctx.restore();
+    }
+  }
+
+  // Determine which refs should have their connections highlighted.
+  // - selected node
+  // - agent-active refs
+  // If there are no connections, nothing extra is drawn.
+  const highlightedRefs = getHighlightedRefs();
+
+  // Draw connections
+  // NOTE: connections can store node ids OR refIds. The graph positions are keyed by node.id.
+  function getNodeForIdOrRef(idOrRef) {
+    const key = String(idOrRef || '').trim();
+    if (!key) return null;
+    return (DB.nodes || []).find(n => n && (n.id === key || n.refId === key)) || null;
+  }
+
+  function getPosForIdOrRef(idOrRef) {
+    const key = String(idOrRef || '').trim();
+    if (!key) return null;
+    if (pos[key]) return pos[key];
+    const node = getNodeForIdOrRef(key);
+    if (!node) return null;
+    return pos[node.id] || null;
+  }
+
+  function canonKey(idOrRef) {
+    // Use refId when possible so we can reliably detect bidirectional pairs.
+    const node = getNodeForIdOrRef(idOrRef);
+    return String(node?.refId || idOrRef || '').trim();
+  }
+
+  // Arrow rendering is controlled ONLY by conn.arrowFlag.
+  // Allowed values: from | to | both | unspecified
+  function arrowFlag(conn) {
+    const v = String(conn?.arrowFlag || 'unspecified').trim().toLowerCase();
+    return v || 'unspecified';
+  }
+
+  // Bezier helpers for arrow placement.
+  function bezierPoint(p0, p1, p2, p3, t) {
+    const u = 1 - t;
+    const tt = t * t;
+    const uu = u * u;
+    const uuu = uu * u;
+    const ttt = tt * t;
+    return {
+      x: (uuu * p0.x) + (3 * uu * t * p1.x) + (3 * u * tt * p2.x) + (ttt * p3.x),
+      y: (uuu * p0.y) + (3 * uu * t * p1.y) + (3 * u * tt * p2.y) + (ttt * p3.y)
+    };
+  }
+
+  function bezierTangent(p0, p1, p2, p3, t) {
+    const u = 1 - t;
+    return {
+      x: 3 * u * u * (p1.x - p0.x) + 6 * u * t * (p2.x - p1.x) + 3 * t * t * (p3.x - p2.x),
+      y: 3 * u * u * (p1.y - p0.y) + 6 * u * t * (p2.y - p1.y) + 3 * t * t * (p3.y - p2.y)
+    };
+  }
+
+  function drawArrowhead(x, y, angle, color) {
+    const size = 7;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-size, -size * 0.6);
+    ctx.lineTo(-size, size * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+
+  for (const conn of DB.connections) {
+    const from = getPosForIdOrRef(conn.fromId);
+    const to = getPosForIdOrRef(conn.toId);
+    if (!from || !to) continue;
+
+    const isHL = connIsHighlighted(conn, highlightedRefs);
+
+    // Base color by type
+    const baseStroke = conn.type === 'depends'
+      ? '#ffffff18'
+      : conn.type === 'provides'
+        ? '#10b98130'
+        : '#7c3aed20';
+
+    // Highlight stroke (thin glowing line)
+    // Requirement: highlighted connection color is determined by the category color
+    // of the node currently being edited (detail panel open / selectedNode).
+    function getCategoryColorForNode(node) {
+      const categories = Array.isArray(DB.categories) ? DB.categories : [];
+      const catId = String(node?.categoryId || '').trim();
+      if (catId) {
+        const c = categories.find(x => String(x?.id || '').trim() === catId);
+        if (c?.color) return String(c.color);
+      }
+      const p = String(node?.refId || '').split('-')[0];
+      if (p) {
+        const c = categories.find(x => String(x?.prefix || x?.id || '').trim() === p);
+        if (c?.color) return String(c.color);
+      }
+      return '';
+    }
+
+    const selectedColor = selectedNode ? getCategoryColorForNode(selectedNode) : '';
+    const hlStroke = selectedColor
+      ? selectedColor
+      : (conn.type === 'depends'
+        ? 'rgba(245,158,11,0.85)'
+        : conn.type === 'provides'
+          ? 'rgba(16,185,129,0.85)'
+          : 'rgba(124,58,237,0.85)');
+
+    // Glow pass (only when highlighted)
+    if (isHL) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      const cpx = (from.x + to.x) / 2;
+      ctx.bezierCurveTo(cpx, from.y, cpx, to.y, to.x, to.y);
+      ctx.strokeStyle = hlStroke;
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = hlStroke;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Normal pass
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    const cpx = (from.x + to.x) / 2;
+    ctx.bezierCurveTo(cpx, from.y, cpx, to.y, to.x, to.y);
+    ctx.strokeStyle = isHL ? hlStroke : baseStroke;
+    ctx.lineWidth = isHL ? 1.2 : 1;
+    ctx.stroke();
+
+    // Direction arrows: ONLY when highlighted, and controlled ONLY by conn.arrowFlag.
+    // - "to"   : arrow from fromId -> toId
+    // - "from" : arrow towards fromId (reverse)
+    // - "both" and "unspecified" : no arrows (glow only)
+    if (isHL) {
+      const af = arrowFlag(conn);
+      if (af === 'to' || af === 'from') {
+        const p0 = { x: from.x, y: from.y };
+        const p1 = { x: cpx, y: from.y };
+        const p2 = { x: cpx, y: to.y };
+        const p3 = { x: to.x, y: to.y };
+
+        // Arrow near target side.
+        const t = 0.78;
+        const pt = bezierPoint(p0, p1, p2, p3, t);
+        const tg = bezierTangent(p0, p1, p2, p3, t);
+        let ang = Math.atan2(tg.y, tg.x);
+        if (af === 'from') ang += Math.PI; // reverse
+        drawArrowhead(pt.x, pt.y, ang, hlStroke);
+      }
+    }
+  }
+
+  // Draw nodes
+  for (const [id, p] of Object.entries(pos)) {
+    const node = DB.nodes.find(n => n.id === id);
+    if (!node) continue;
+    const isSelected = selectedNode?.id === id;
+    const r = isSelected ? 7 : 5;
+
+    const ws = effectiveWorkStateForNode(node);
+
+    // Work-state glow (active/last)
+    if (ws === 'active' || ws === 'last') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = ws === 'active' ? 'rgba(245,158,11,0.9)' : 'rgba(107,114,128,0.85)';
+      ctx.lineWidth = 2;
+      if (ws === 'last') {
+        ctx.setLineDash([4, 3]);
+      } else {
+        ctx.setLineDash([]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#fff' : p.color;
+    ctx.fill();
+    if (isSelected) { ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.stroke(); }
+
+    ctx.font = '9px ' + getComputedStyle(document.body).fontFamily;
+    ctx.fillStyle = isSelected ? '#fff' : 'rgba(200,205,216,0.6)';
+    ctx.fillText(node.refId || '', p.x + 10, p.y + 3);
+  }
+
+  ctx.restore();
+}
+
+// Graph interaction
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
+canvas.addEventListener('mousedown', (e) => { graphState.dragging = true; graphState.dragStart = { x: e.clientX - graphState.panX, y: e.clientY - graphState.panY }; });
+canvas.addEventListener('mousemove', (e) => { if (graphState.dragging) { graphState.panX = e.clientX - graphState.dragStart.x; graphState.panY = e.clientY - graphState.dragStart.y; renderGraph(); } });
+canvas.addEventListener('mouseup', () => { graphState.dragging = false; });
+canvas.addEventListener('click', (e) => {
+  if (graphState.dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left - graphState.panX) / graphState.zoom;
+  const my = (e.clientY - rect.top - graphState.panY) / graphState.zoom;
+  for (const [id, p] of Object.entries(graphState.nodePositions)) {
+    if (Math.hypot(mx - p.x, my - p.y) < 12) { selectNode(id); return; }
+  }
+});
+
+function zoomGraph(factor) { graphState.zoom *= factor; graphState.zoom = Math.max(0.1, Math.min(5, graphState.zoom)); renderGraph(); }
+function resetGraph() { graphState.zoom = 1; graphState.panX = 0; graphState.panY = 0; renderGraph(); }
+
+// ─── NODE SELECTION & DETAIL ───────────────────
+function selectNode(id) {
+  selectedNode = DB.nodes.find(n => n.id === id || n.refId === id);
+  if (!selectedNode) return;
+  renderSidebar();
+  renderGraph();
+  renderDetail();
+}
+
+function renderDetail() {
+  if (!selectedNode) return;
+  const panel = document.getElementById('detail-panel');
+  const n = selectedNode;
+  panel.classList.add('open');
+  // Opening the detail panel changes available canvas width.
+  // Resize immediately so the graph doesn't leave stale areas.
+  resizeCanvas();
+  document.getElementById('detail-title').textContent = `${n.refId || ''} ${n.title || ''}`;
+
+  const connsFrom = DB.connections.filter(c => c.fromId === n.id || c.fromId === n.refId);
+  const connsTo = DB.connections.filter(c => c.toId === n.id || c.toId === n.refId);
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <h3>⚙ Grunddaten</h3>
+      <div class="detail-field"><label>Kategorie</label>
+        <select onchange="updateNode('categoryId',this.value)">
+          ${(Array.isArray(DB.categories) ? DB.categories : []).map(c => {
+            const id = String(c?.id || '').trim();
+            if (!id) return '';
+            const name = String(c?.name || '').trim();
+            const label = name ? `${id} — ${name}` : id;
+            return `<option value="${id}" ${String(n.categoryId || '') === id ? 'selected' : ''}>${label}</option>`;
+          }).join('')}
+          <option value="" ${!n.categoryId ? 'selected' : ''}>OTHER / Unassigned</option>
+        </select>
+      </div>
+      <div class="detail-field"><label>REF-ID</label><input value="${n.refId || ''}" onchange="updateNode('refId',this.value)"></div>
+      <div class="detail-field"><label>Titel</label><input value="${n.title || ''}" onchange="updateNode('title',this.value)"></div>
+      <div class="detail-field"><label>Status</label>
+        <select onchange="updateNode('status',this.value)">
+          <option ${n.status === 'OFFEN' ? 'selected' : ''}>OFFEN</option>
+          <option ${n.status === 'ENTSCHIEDEN' ? 'selected' : ''}>ENTSCHIEDEN</option>
+          <option ${n.status === 'PRE-FORMULIERUNG' ? 'selected' : ''}>PRE-FORMULIERUNG</option>
+        </select>
+      </div>
+      <div class="detail-field"><label>Beschreibung</label><textarea rows="4" onchange="updateNode('description',this.value)">${n.description || ''}</textarea></div>
+    </div>
+
+    <div class="detail-section">
+      <h3>🏷 Flags</h3>
+      <div class="detail-field">
+        <div class="tag-list">${(n.flags || []).map(f => `<span class="tag active" onclick='removeFlag(${JSON.stringify(String(f))})' title="Remove">${f} ✕</span>`).join('')}</div>
+        <input placeholder="Flag hinzufügen..." style="margin-top:6px" onkeydown="if(event.key==='Enter'){addFlag(this.value);this.value=''}">
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>🔗 Verbindungen (${connsFrom.length + connsTo.length})</h3>
+      <ul class="conn-list">
+        ${connsFrom.map(c => `<li>
+          <span onclick="selectNode('${c.toId}')"><span class="conn-type">${c.type}</span>→ ${c.toId} ${c.label || ''}</span>
+          <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+            <span style="opacity:0.6;font-size:0.72rem">${(c.arrowFlag || 'unspecified')}</span>
+            <button class="btn" style="padding:2px 8px" onclick="openConnFlagger('${n.refId || n.id}','${c.toId}','${c.type}')">Flag</button>
+            <button class="btn danger" style="padding:2px 8px" onclick="removeConnection('${n.refId || n.id}','${c.toId}','${c.type}')">✕</button>
+          </span>
+        </li>`).join('')}
+        ${connsTo.map(c => `<li>
+          <span onclick="selectNode('${c.fromId}')"><span class="conn-type">${c.type}</span>← ${c.fromId} ${c.label || ''}</span>
+          <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+            <span style="opacity:0.6;font-size:0.72rem">${(c.arrowFlag || 'unspecified')}</span>
+            <button class="btn" style="padding:2px 8px" onclick="openConnFlagger('${c.fromId}','${n.refId || n.id}','${c.type}')">Flag</button>
+            <button class="btn danger" style="padding:2px 8px" onclick="removeConnection('${c.fromId}','${n.refId || n.id}','${c.type}')">✕</button>
+          </span>
+        </li>`).join('')}
+      </ul>
+      <div style="margin-top:8px;display:flex;gap:4px;align-items:center">
+        <button class="btn" onclick="openConnFlagger('${n.refId || n.id}','','custom')">+ Add / Flag</button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>💡 Lösungsvorschlag</h3>
+      <textarea class="code-solution" rows="6" onchange="updateNode('codeSolution',this.value)" placeholder="Code, Pseudocode, Architekturidee...">${n.codeSolution || ''}</textarea>
+    </div>
+
+    <div class="detail-section">
+      <button class="btn danger" onclick="deleteNode('${n.id}')">🗑 Eintrag löschen</button>
+    </div>
+  `;
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  selectedNode = null;
+  renderSidebar();
+  // IMPORTANT: closing the detail panel changes available canvas width.
+  // Force a canvas resize + full redraw to avoid stale/black artifacts.
+  resizeCanvas();
+  renderGraph();
+}
+
+async function updateNode(key, value) {
+  if (!selectedNode) return;
+  selectedNode[key] = value;
+  await api('/nodes/' + selectedNode.id, 'PUT', selectedNode);
+  renderSidebar();
+  renderGraph();
+}
+
+async function addFlag(flag) {
+  if (!selectedNode || !flag.trim()) return;
+  if (!selectedNode.flags) selectedNode.flags = [];
+  const f = flag.trim();
+  if (!selectedNode.flags.includes(f)) selectedNode.flags.push(f);
+  await api('/nodes/' + selectedNode.id, 'PUT', selectedNode);
+  renderDetail();
+}
+
+async function removeFlag(flag) {
+  if (!selectedNode) return;
+  const f = String(flag || '').trim();
+  if (!f) return;
+  selectedNode.flags = (selectedNode.flags || []).filter(x => String(x) !== f);
+  await api('/nodes/' + selectedNode.id, 'PUT', selectedNode);
+  renderDetail();
+}
+
+async function addConnection() {
+  const target = document.getElementById('conn-target').value.trim();
+  const type = document.getElementById('conn-type').value;
+  if (!target || !selectedNode) return;
+  await api('/connections', 'POST', { fromId: selectedNode.refId || selectedNode.id, toId: target, type });
+  await loadDB();
+  renderDetail();
+}
+
+async function deleteNode(id) {
+  if (!confirm('Wirklich löschen?')) return;
+  await api('/nodes/' + id, 'DELETE');
+  closeDetail();
+  await loadDB();
+}
+
+// ─── CONNECTION ARROW FLAGGER (UI) ─────────────────────────
+let CF_STATE = { origin: '', target: '', type: 'custom' };
+
+function openConnFlagger(origin, target, type) {
+  CF_STATE = { origin: String(origin || '').trim(), target: String(target || '').trim(), type: String(type || 'custom') };
+
+  const modal = document.getElementById('conn-flagger-modal');
+  const originEl = document.getElementById('cf-origin');
+  const targetEl = document.getElementById('cf-target');
+  const typeEl = document.getElementById('cf-type');
+  const arrowEl = document.getElementById('cf-arrow');
+
+  if (originEl) originEl.value = CF_STATE.origin;
+
+  // Fill target dropdown from nodes (refId preferred)
+  const options = (DB.nodes || [])
+    .map(n => ({ refId: String(n.refId || '').trim(), title: String(n.title || '').trim() }))
+    .filter(x => x.refId && x.refId !== CF_STATE.origin);
+
+  if (targetEl) {
+    targetEl.innerHTML = `<option value="">-- choose target --</option>` + options
+      .map(o => `<option value="${o.refId}">${o.refId}${o.title ? ' — ' + o.title : ''}</option>`)
+      .join('');
+    if (CF_STATE.target) targetEl.value = CF_STATE.target;
+  }
+
+  if (typeEl) typeEl.value = CF_STATE.type;
+
+  // Preselect current arrowFlag if the connection exists
+  const existing = (DB.connections || []).find(c => String(c.fromId) === CF_STATE.origin && String(c.toId) === CF_STATE.target && String(c.type) === CF_STATE.type);
+  const af = String(existing?.arrowFlag || 'unspecified').trim().toLowerCase();
+  if (arrowEl) arrowEl.value = af || 'unspecified';
+
+  if (modal) modal.classList.add('open');
+}
+
+function closeConnFlagger() {
+  const modal = document.getElementById('conn-flagger-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+async function saveConnFlagger() {
+  const origin = String(document.getElementById('cf-origin')?.value || '').trim();
+  const target = String(document.getElementById('cf-target')?.value || '').trim();
+  const type = String(document.getElementById('cf-type')?.value || 'custom').trim();
+  const arrowFlag = String(document.getElementById('cf-arrow')?.value || 'unspecified').trim().toLowerCase();
+
+  if (!target) {
+    alert('FEHLER: NO TARGET');
+    return;
+  }
+
+  // Ensure connection exists. If missing, create it.
+  const exists = (DB.connections || []).some(c => String(c.fromId) === origin && String(c.toId) === target && String(c.type) === type);
+
+  if (!exists) {
+    const r = await api('/connections', 'POST', { fromId: origin, toId: target, type, arrowFlag });
+    if (r && r.error) { alert('Save failed: ' + r.error); return; }
+  } else {
+    const r = await api('/connections', 'PATCH', { fromId: origin, toId: target, type, arrowFlag });
+    if (r && r.error) { alert('Save failed: ' + r.error); return; }
+  }
+
+  toast('Saved');
+  await loadDB();
+  // Keep detail panel content consistent
+  renderDetail();
+  closeConnFlagger();
+}
+
+async function removeConnection(fromId, toId, type) {
+  const r = await api('/connections', 'DELETE', { fromId, toId, type });
+  if (r && r.error) { alert('Remove failed: ' + r.error); return; }
+  toast('Removed');
+  await loadDB();
+  renderDetail();
+}
+
+// ─── STORY VIEW ────────────────────────────────
+function renderStory() {
+  const container = document.getElementById('story-view');
+  const beats = [...DB.storybeats].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h2 style="color:var(--acc)">Storyboard</h2><button class="btn primary" onclick="addStorybeat()">+ Beat</button></div>';
+  html += '<div class="story-timeline">';
+  for (const beat of beats) {
+    const cls = beat.type === 'cut' ? 'cut' : 'scene';
+    html += `<div class="story-beat ${cls}" onclick="editStorybeat('${beat.id}')">
+      <h4>${beat.type === 'cut' ? '🎬' : '🎮'} ${beat.title || 'Untitled'}</h4>
+      <p>${beat.description || ''}</p>
+      <div class="story-refs">${(beat.gameRefs || []).map(r => `<span class="tag">${r}</span>`).join('')}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function addStorybeat() {
+  const beat = { title: 'Neuer Beat', description: '', type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: '' };
+  await api('/storybeats', 'POST', beat);
+  await loadDB();
+  renderStory();
+  toast('Storybeat erstellt');
+}
+
+function editStorybeat(id) {
+  const beat = DB.storybeats.find(b => b.id === id);
+  if (!beat) return;
+  // Open in detail panel
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  document.getElementById('detail-title').textContent = `🎬 ${beat.title}`;
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-field"><label>Titel</label><input value="${beat.title || ''}" onchange="updateBeat('${id}','title',this.value)"></div>
+      <div class="detail-field"><label>Typ</label>
+        <select onchange="updateBeat('${id}','type',this.value)">
+          <option value="scene" ${beat.type === 'scene' ? 'selected' : ''}>Spielbare Szene</option>
+          <option value="cut" ${beat.type === 'cut' ? 'selected' : ''}>Video-Cut</option>
+        </select>
+      </div>
+      <div class="detail-field"><label>Reihenfolge</label><input type="number" value="${beat.order || 0}" onchange="updateBeat('${id}','order',parseInt(this.value))"></div>
+      <div class="detail-field"><label>Beschreibung</label><textarea rows="5" onchange="updateBeat('${id}','description',this.value)">${beat.description || ''}</textarea></div>
+      <div class="detail-field"><label>Game-Referenzen (kommagetrennt)</label><input value="${(beat.gameRefs || []).join(', ')}" onchange="updateBeat('${id}','gameRefs',this.value.split(',').map(s=>s.trim()).filter(Boolean))"></div>
+      <div class="detail-field"><label>Notizen</label><textarea rows="3" onchange="updateBeat('${id}','notes',this.value)">${beat.notes || ''}</textarea></div>
+      <button class="btn danger" style="margin-top:12px" onclick="deleteBeat('${id}')">🗑 Beat löschen</button>
+    </div>
+  `;
+}
+
+async function updateBeat(id, key, value) {
+  const beat = DB.storybeats.find(b => b.id === id);
+  if (!beat) return;
+  beat[key] = value;
+  await api('/storybeats/' + id, 'PUT', beat);
+  renderStory();
+}
+
+async function deleteBeat(id) {
+  if (!confirm('Beat löschen?')) return;
+  await api('/storybeats/' + id, 'DELETE');
+  closeDetail();
+  await loadDB();
+  renderStory();
+}
+
+// ─── TABS ──────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('graph-container').style.display = tab === 'systems' ? 'block' : 'none';
+  document.getElementById('story-view').style.display = tab === 'story' ? 'block' : 'none';
+  if (tab === 'story') renderStory();
+  if (tab === 'systems') { resizeCanvas(); renderGraph(); }
+}
+
+// ─── CREATE MODAL ──────────────────────────────
+function openCreateModal() {
+  document.getElementById('create-modal').classList.add('open');
+  const catSel = document.getElementById('new-cat');
+
+  const categories = Array.isArray(DB.categories) ? DB.categories : [];
+  if (categories.length) {
+    catSel.innerHTML = categories
+      .filter(c => c && c.id)
+      .map(c => {
+        const id = String(c.id);
+        const name = String(c.name || '').trim();
+        const label = name ? `${id} — ${name}` : id;
+        return `<option value="${id}">${label}</option>`;
+      })
+      .join('');
+  } else {
+    // Fallback if no category config is loaded yet.
+    catSel.innerHTML = `<option value="DEFAULT">DEFAULT</option>`;
+  }
+}
+function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); }
+
+async function createEntry() {
+  const type = document.getElementById('new-type').value;
+  if (type === 'node') {
+    const node = {
+      categoryId: document.getElementById('new-cat').value,
+      refId: document.getElementById('new-refid').value.trim(),
+      title: document.getElementById('new-title').value.trim(),
+      description: document.getElementById('new-desc').value,
+      status: document.getElementById('new-status').value,
+      flags: document.getElementById('new-flags').value.split(',').map(s => s.trim()).filter(Boolean),
+      dependsOn: [], provides: [], emits: [], listensTo: [], codeSolution: '', connections: []
+    };
+    await api('/nodes', 'POST', node);
+    toast('Node erstellt: ' + node.refId);
+  } else {
+    const beat = {
+      title: document.getElementById('new-title').value.trim(),
+      description: document.getElementById('new-desc').value,
+      type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: ''
+    };
+    await api('/storybeats', 'POST', beat);
+    toast('Storybeat erstellt');
+  }
+  closeCreateModal();
+  await loadDB();
+}
+
+// ─── TOAST ─────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── AGENT PANEL TOGGLE ─── NEU ───────────────
+let agentPanelOpen = false;
+let agentResizeObserver = null;
+
+function syncAgentPanelWidthVar() {
+  const panel = document.getElementById('agent-panel');
+  if (!panel) return;
+  const w = panel.getBoundingClientRect().width;
+  document.documentElement.style.setProperty('--agentW', Math.round(w) + 'px');
+}
+
+function toggleAgentPanel() {
+  agentPanelOpen = !agentPanelOpen;
+  const panel = document.getElementById('agent-panel');
+  panel.classList.toggle('open', agentPanelOpen);
+  document.body.classList.toggle('agent-open', agentPanelOpen);
+
+  if (agentPanelOpen) {
+    // Observe resize so main layout + canvas always redraw correctly.
+    syncAgentPanelWidthVar();
+    try {
+      agentResizeObserver = agentResizeObserver || new ResizeObserver(() => {
+        syncAgentPanelWidthVar();
+        resizeCanvas();
+      });
+      agentResizeObserver.observe(panel);
+    } catch { /* ignore */ }
+  } else {
+    try { if (agentResizeObserver) agentResizeObserver.unobserve(panel); } catch {}
+  }
+
+  resizeCanvas();
+}
+
+// ─── SSE + AGENT TICKER ─── NEU ───────────────
+let eventSource = null;
+
+function connectSSE() {
+  if (eventSource) eventSource.close();
+  eventSource = new EventSource('/api/events');
+
+  eventSource.addEventListener('agent.state', e => updateTicker(JSON.parse(e.data)));
+  eventSource.addEventListener('agent.tick', e => updateTicker(JSON.parse(e.data)));
+
+  eventSource.addEventListener('agent.activity', e => {
+    // Update file-glow state and re-render.
+    try {
+      const a = JSON.parse(e.data);
+      AGENT_ACTIVE_FILES = Array.isArray(a.activeFiles) ? a.activeFiles.map(normFile).filter(Boolean) : [];
+      AGENT_LAST_FILES = Array.isArray(a.lastFiles) ? a.lastFiles.map(normFile).filter(Boolean) : [];
+      AGENT_ACTIVE_REFS = Array.isArray(a.activeRefs) ? a.activeRefs.map(normFile).filter(Boolean) : [];
+      AGENT_LAST_REFS = Array.isArray(a.lastRefs) ? a.lastRefs.map(normFile).filter(Boolean) : [];
+    } catch {}
+    // DB neuladen → Node/storybeat states aktualisieren + file-based glow anwenden
+    loadDB();
+  });
+
+  eventSource.addEventListener('agent.done', () => {
+    document.getElementById('chat-send-btn').disabled = false;
+    const cancelBtn = document.getElementById('agent-cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  });
+
+  eventSource.addEventListener('agent.error', e => {
+    const data = JSON.parse(e.data);
+    appendChatMsg('assistant', 'FEHLER: ' + data.message, 'err_' + Date.now());
+    document.getElementById('chat-send-btn').disabled = false;
+  });
+
+  eventSource.addEventListener('chat.message', e => {
+    const msg = JSON.parse(e.data);
+    appendChatMsg(msg.role, msg.text, msg.id);
+  });
+
+  eventSource.addEventListener('chat.delta', e => {
+    const d = JSON.parse(e.data);
+    appendChatDelta(d.id, d.delta);
+  });
+
+  eventSource.addEventListener('db.changed', () => loadDB());
+
+  eventSource.onerror = () => setTimeout(connectSSE, 3000);
+}
+
+function updateTicker(s) {
+  const statusLine = document.getElementById('agent-status-line');
+  const taskEl = document.getElementById('agent-task');
+  const activeEl = document.getElementById('agent-active-refs');
+  const lastEl = document.getElementById('agent-last-refs');
+  const btn = document.getElementById('chat-send-btn');
+  const cancelBtn = document.getElementById('agent-cancel-btn');
+
+  if (s.busy) {
+    statusLine.className = 'busy';
+    statusLine.textContent = 'Agent arbeitet ... ' + (s.elapsedSec || 0) + 's';
+    btn.disabled = true;
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    if (s.currentTask) { taskEl.style.display = 'block'; taskEl.textContent = 'Task: ' + s.currentTask; }
+  } else {
+    statusLine.className = 'idle';
+    statusLine.textContent = 'Agent: idle';
+    taskEl.style.display = 'none';
+    btn.disabled = false;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (s.activeRefs && s.activeRefs.length) {
+    activeEl.style.display = 'block';
+    activeEl.textContent = 'Aktiv: ' + s.activeRefs.join(', ');
+  } else { activeEl.style.display = 'none'; }
+
+  if (s.lastRefs && s.lastRefs.length) {
+    lastEl.style.display = 'block';
+    lastEl.textContent = 'Zuletzt: ' + s.lastRefs.join(', ');
+  } else { lastEl.style.display = 'none'; }
+}
+
+// ─── CHAT ─── NEU ─────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = String(input.value || '').trim();
+  if (!text) return;
+  const btn = document.getElementById('chat-send-btn');
+  btn.disabled = true;
+  input.value = '';
+  try {
+    const resp = await fetch('/api/chat/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+    const data = await resp.json();
+    if (data.error) { alert('Agent: ' + data.error); btn.disabled = false; }
+    // Auto-open agent panel
+    if (!agentPanelOpen) toggleAgentPanel();
+  } catch (e) { alert('Fehler: ' + e.message); btn.disabled = false; }
+}
+
+// Enter to send, Shift+Enter for newline
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      sendChat();
+    }
+  });
+});
+
+function appendChatMsg(role, text, id) {
+  const box = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + role;
+  el.dataset.id = id || '';
+  el.textContent = text || '';
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function appendChatDelta(id, delta) {
+  const box = document.getElementById('chat-messages');
+  let el = box.querySelector('[data-id="' + id + '"]');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'chat-msg assistant';
+    el.dataset.id = id;
+    box.appendChild(el);
+  }
+  el.textContent += delta;
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadChatHistory() {
+  try {
+    const resp = await fetch('/api/chat/history');
+    const msgs = await resp.json();
+    for (const msg of msgs) appendChatMsg(msg.role, msg.text, msg.id);
+  } catch (e) { /* ignore */ }
+}
+
+async function cancelAgent() {
+  try {
+    const resp = await fetch('/api/agent/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await resp.json();
+    if (data && data.error) {
+      alert('Cancel failed: ' + data.error);
+      return;
+    }
+    appendChatMsg('assistant', 'Anfrage abgebrochen, war noch was?', 'cancel_' + Date.now());
+  } catch (e) {
+    alert('Cancel failed: ' + e.message);
+  }
+}
+
+// ─── WORK-STATE GLOW ───
+// Sidebar node items + category headers now get data-ws directly in renderSidebar().
+// Storybeat cards still need a tiny post-pass because they are generated from HTML.
+const _origRenderStory = renderStory;
+renderStory = function() {
+  _origRenderStory();
+  for (const beat of DB.storybeats) {
+    const ws = effectiveWorkStateForBeat(beat);
+    if (!ws || ws === 'idle') continue;
+    // Best-effort: match by id in onclick attribute
+    const card = document.querySelector(`.story-beat[onclick*="${beat.id}"]`);
+    if (card) card.dataset.ws = ws;
+  }
+};
+
+// ─── INIT ──────────────────────────────────────
+loadDB();
+loadChatHistory();
+connectSSE();
+</script>
+</body>
+</html>
+

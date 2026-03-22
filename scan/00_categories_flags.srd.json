@@ -1,0 +1,37 @@
+{
+  "_srd_version": "1.0",
+  "_source": "template",
+  "_description": "Template: Categories + Flags (generic, no project references).",
+
+  "categories": [
+    {
+      "id": "DEFAULT",
+      "name": "DEFAULT",
+      "prefix": "DEFAULT",
+      "color": "#00d4ff",
+      "description": "Template category. Rename and fill with your own content."
+    },
+    {
+      "id": "TEMPLATE",
+      "name": "TEMPLATE",
+      "prefix": "TEMPLATE",
+      "color": "#10b981",
+      "description": "Template category. Rename and fill with your own content."
+    }
+  ],
+
+  "flags": [
+    {
+      "id": "template_flag",
+      "name": "TEMPLATE",
+      "appliesTo": ["DEFAULT", "TEMPLATE"],
+      "description": "Example flag (optional)."
+    },
+    {
+      "id": "default_flag",
+      "name": "DEFAULT",
+      "appliesTo": ["DEFAULT", "TEMPLATE"],
+      "description": "Example flag (optional)."
+    }
+  ]
+}
