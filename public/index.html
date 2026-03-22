@@ -23,10 +23,11 @@
 
   Credits / Contributors:
   - Rick Kühnreich (Embolex)
+  - OpenClaw Agent (gpt-5.2-codex) — special thanks
   - OpenAI ChatGPT 5.2-codex (assistance)
   - Anthropic Claude (assistance)
 -->
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -195,14 +196,14 @@ body.agent-open #header{padding-right:calc(var(--agentW) + 16px)}
   <h1 id="roadmap-name">OpenRoadmap Planner</h1>
   <div class="sep"></div>
   <div class="tab-bar">
-    <div class="tab active" data-tab="systems" onclick="switchTab('systems')">Systeme</div>
+    <div class="tab active" data-tab="systems" onclick="switchTab('systems')">Systems</div>
     <div class="tab" data-tab="story" onclick="switchTab('story')">Storyboard</div>
   </div>
   <div class="header-actions">
     <button class="btn" onclick="openNameModal()">Change Roadmap Name</button>
     <button class="btn" onclick="openCategoriesModal()">Edit Categories</button>
     <button class="btn" onclick="triggerScan()">⟳ Scan</button>
-    <button class="btn primary" onclick="openCreateModal()">+ Neu</button>
+    <button class="btn primary" onclick="openCreateModal()">+ New</button>
     <button class="btn" onclick="exportDB()">↓ Export</button>
     <button class="btn" id="agent-toggle" onclick="toggleAgentPanel()">🤖 Agent</button>
   </div>
@@ -213,7 +214,7 @@ body.agent-open #header{padding-right:calc(var(--agentW) + 16px)}
   <!-- SIDEBAR -->
   <div id="sidebar">
     <div class="sidebar-header">
-      <input type="text" id="search" placeholder="Suche..." oninput="filterNodes()">
+      <input type="text" id="search" placeholder="Search..." oninput="filterNodes()">
     </div>
     <div id="cat-list" class="cat-list"></div>
   </div>
@@ -335,21 +336,21 @@ body.agent-open #header{padding-right:calc(var(--agentW) + 16px)}
 <!-- CREATE MODAL -->
 <div class="modal-overlay" id="create-modal">
   <div class="modal">
-    <h2>Neuer Eintrag</h2>
-    <div class="detail-field"><label>Typ</label>
-      <select id="new-type"><option value="node">System-Node</option><option value="storybeat">Storybeat</option></select>
+    <h2>New Entry</h2>
+    <div class="detail-field"><label>Type</label>
+      <select id="new-type"><option value="node">System Node</option><option value="storybeat">Storyboard Entry</option></select>
     </div>
-    <div class="detail-field"><label>Kategorie</label><select id="new-cat"></select></div>
-    <div class="detail-field"><label>REF-ID (z.B. GAM-015)</label><input id="new-refid"></div>
-    <div class="detail-field"><label>Titel</label><input id="new-title"></div>
-    <div class="detail-field"><label>Beschreibung</label><textarea id="new-desc" rows="3"></textarea></div>
+    <div class="detail-field"><label>Category</label><select id="new-cat"></select></div>
+    <div class="detail-field"><label>REF-ID (e.g. DEFAULT-001)</label><input id="new-refid"></div>
+    <div class="detail-field"><label>Title</label><input id="new-title"></div>
+    <div class="detail-field"><label>Description</label><textarea id="new-desc" rows="3"></textarea></div>
     <div class="detail-field"><label>Status</label>
-      <select id="new-status"><option value="OFFEN">OFFEN</option><option value="ENTSCHIEDEN">ENTSCHIEDEN</option><option value="PRE-FORMULIERUNG">PRE-FORMULIERUNG</option></select>
+      <select id="new-status"><option value="OFFEN">OPEN</option><option value="ENTSCHIEDEN">DECIDED</option><option value="PRE-FORMULIERUNG">DRAFT</option></select>
     </div>
-    <div class="detail-field"><label>Flags (kommagetrennt)</label><input id="new-flags" placeholder="is_item, is_module, is_weapon..."></div>
+    <div class="detail-field"><label>Flags (comma-separated)</label><input id="new-flags" placeholder="example_flag, needs_review"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button class="btn" onclick="closeCreateModal()">Abbrechen</button>
-      <button class="btn primary" onclick="createEntry()">Erstellen</button>
+      <button class="btn" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn primary" onclick="createEntry()">Create</button>
     </div>
   </div>
 </div>
@@ -369,8 +370,8 @@ body.agent-open #header{padding-right:calc(var(--agentW) + 16px)}
   </div>
   <div id="chat-messages"></div>
   <div id="chat-input-bar">
-    <textarea id="chat-input" rows="3" placeholder="Nachricht an Agent... (Enter = senden, Shift+Enter = neue Zeile)"></textarea>
-    <button id="chat-send-btn" onclick="sendChat()">Senden</button>
+    <textarea id="chat-input" rows="3" placeholder="Message to agent... (Enter = send, Shift+Enter = newline)"></textarea>
+    <button id="chat-send-btn" onclick="sendChat()">Send</button>
   </div>
 </div>
 
@@ -475,7 +476,7 @@ async function loadDB() {
 
 async function triggerScan() {
   const r = await api('/scan', 'POST');
-  toast(`Scan: ${r.files} Dateien, +${r.totalAdded} neu, ~${r.totalUpdated} aktualisiert`);
+  toast(`Scan: ${r.files} files, +${r.totalAdded} new, ~${r.totalUpdated} updated`);
   await loadDB();
 }
 
@@ -1142,8 +1143,8 @@ function renderDetail() {
 
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-section">
-      <h3>⚙ Grunddaten</h3>
-      <div class="detail-field"><label>Kategorie</label>
+      <h3>⚙ Basics</h3>
+      <div class="detail-field"><label>Category</label>
         <select onchange="updateNode('categoryId',this.value)">
           ${(Array.isArray(DB.categories) ? DB.categories : []).map(c => {
             const id = String(c?.id || '').trim();
@@ -1156,22 +1157,22 @@ function renderDetail() {
         </select>
       </div>
       <div class="detail-field"><label>REF-ID</label><input value="${n.refId || ''}" onchange="updateNode('refId',this.value)"></div>
-      <div class="detail-field"><label>Titel</label><input value="${n.title || ''}" onchange="updateNode('title',this.value)"></div>
+      <div class="detail-field"><label>Title</label><input value="${n.title || ''}" onchange="updateNode('title',this.value)"></div>
       <div class="detail-field"><label>Status</label>
         <select onchange="updateNode('status',this.value)">
-          <option ${n.status === 'OFFEN' ? 'selected' : ''}>OFFEN</option>
+          <option ${n.status === 'OFFEN' ? 'selected' : ''}>OPEN</option>
           <option ${n.status === 'ENTSCHIEDEN' ? 'selected' : ''}>ENTSCHIEDEN</option>
-          <option ${n.status === 'PRE-FORMULIERUNG' ? 'selected' : ''}>PRE-FORMULIERUNG</option>
+          <option ${n.status === 'PRE-FORMULIERUNG' ? 'selected' : ''}>DRAFT</option>
         </select>
       </div>
-      <div class="detail-field"><label>Beschreibung</label><textarea rows="4" onchange="updateNode('description',this.value)">${n.description || ''}</textarea></div>
+      <div class="detail-field"><label>Description</label><textarea rows="4" onchange="updateNode('description',this.value)">${n.description || ''}</textarea></div>
     </div>
 
     <div class="detail-section">
       <h3>🏷 Flags</h3>
       <div class="detail-field">
         <div class="tag-list">${(n.flags || []).map(f => `<span class="tag active" onclick='removeFlag(${JSON.stringify(String(f))})' title="Remove">${f} ✕</span>`).join('')}</div>
-        <input placeholder="Flag hinzufügen..." style="margin-top:6px" onkeydown="if(event.key==='Enter'){addFlag(this.value);this.value=''}">
+        <input placeholder="Add flag..." style="margin-top:6px" onkeydown="if(event.key==='Enter'){addFlag(this.value);this.value=''}">
       </div>
     </div>
 
@@ -1201,12 +1202,12 @@ function renderDetail() {
     </div>
 
     <div class="detail-section">
-      <h3>💡 Lösungsvorschlag</h3>
+      <h3>💡 Solution Idea</h3>
       <textarea class="code-solution" rows="6" onchange="updateNode('codeSolution',this.value)" placeholder="Code, Pseudocode, Architekturidee...">${n.codeSolution || ''}</textarea>
     </div>
 
     <div class="detail-section">
-      <button class="btn danger" onclick="deleteNode('${n.id}')">🗑 Eintrag löschen</button>
+      <button class="btn danger" onclick="deleteNode('${n.id}')">🗑 Delete Entry</button>
     </div>
   `;
 }
@@ -1257,7 +1258,7 @@ async function addConnection() {
 }
 
 async function deleteNode(id) {
-  if (!confirm('Wirklich löschen?')) return;
+  if (!confirm('Really delete?')) return;
   await api('/nodes/' + id, 'DELETE');
   closeDetail();
   await loadDB();
@@ -1311,7 +1312,7 @@ async function saveConnFlagger() {
   const arrowFlag = String(document.getElementById('cf-arrow')?.value || 'unspecified').trim().toLowerCase();
 
   if (!target) {
-    alert('FEHLER: NO TARGET');
+    alert('ERROR: NO TARGET');
     return;
   }
 
@@ -1361,7 +1362,7 @@ function renderStory() {
 }
 
 async function addStorybeat() {
-  const beat = { title: 'Neuer Beat', description: '', type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: '' };
+  const beat = { title: 'New beat', description: '', type: 'scene', order: DB.storybeats.length, gameRefs: [], notes: '' };
   await api('/storybeats', 'POST', beat);
   await loadDB();
   renderStory();
@@ -1377,18 +1378,18 @@ function editStorybeat(id) {
   document.getElementById('detail-title').textContent = `🎬 ${beat.title}`;
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-section">
-      <div class="detail-field"><label>Titel</label><input value="${beat.title || ''}" onchange="updateBeat('${id}','title',this.value)"></div>
-      <div class="detail-field"><label>Typ</label>
+      <div class="detail-field"><label>Title</label><input value="${beat.title || ''}" onchange="updateBeat('${id}','title',this.value)"></div>
+      <div class="detail-field"><label>Type</label>
         <select onchange="updateBeat('${id}','type',this.value)">
-          <option value="scene" ${beat.type === 'scene' ? 'selected' : ''}>Spielbare Szene</option>
+          <option value="scene" ${beat.type === 'scene' ? 'selected' : ''}>Playable Scene</option>
           <option value="cut" ${beat.type === 'cut' ? 'selected' : ''}>Video-Cut</option>
         </select>
       </div>
-      <div class="detail-field"><label>Reihenfolge</label><input type="number" value="${beat.order || 0}" onchange="updateBeat('${id}','order',parseInt(this.value))"></div>
-      <div class="detail-field"><label>Beschreibung</label><textarea rows="5" onchange="updateBeat('${id}','description',this.value)">${beat.description || ''}</textarea></div>
-      <div class="detail-field"><label>Game-Referenzen (kommagetrennt)</label><input value="${(beat.gameRefs || []).join(', ')}" onchange="updateBeat('${id}','gameRefs',this.value.split(',').map(s=>s.trim()).filter(Boolean))"></div>
-      <div class="detail-field"><label>Notizen</label><textarea rows="3" onchange="updateBeat('${id}','notes',this.value)">${beat.notes || ''}</textarea></div>
-      <button class="btn danger" style="margin-top:12px" onclick="deleteBeat('${id}')">🗑 Beat löschen</button>
+      <div class="detail-field"><label>Order</label><input type="number" value="${beat.order || 0}" onchange="updateBeat('${id}','order',parseInt(this.value))"></div>
+      <div class="detail-field"><label>Description</label><textarea rows="5" onchange="updateBeat('${id}','description',this.value)">${beat.description || ''}</textarea></div>
+      <div class="detail-field"><label>References (comma-separated)</label><input value="${(beat.gameRefs || []).join(', ')}" onchange="updateBeat('${id}','gameRefs',this.value.split(',').map(s=>s.trim()).filter(Boolean))"></div>
+      <div class="detail-field"><label>Notes</label><textarea rows="3" onchange="updateBeat('${id}','notes',this.value)">${beat.notes || ''}</textarea></div>
+      <button class="btn danger" style="margin-top:12px" onclick="deleteBeat('${id}')">🗑 Delete beat</button>
     </div>
   `;
 }
@@ -1402,7 +1403,7 @@ async function updateBeat(id, key, value) {
 }
 
 async function deleteBeat(id) {
-  if (!confirm('Beat löschen?')) return;
+  if (!confirm('Delete beat?')) return;
   await api('/storybeats/' + id, 'DELETE');
   closeDetail();
   await loadDB();
@@ -1542,7 +1543,7 @@ function connectSSE() {
 
   eventSource.addEventListener('agent.error', e => {
     const data = JSON.parse(e.data);
-    appendChatMsg('assistant', 'FEHLER: ' + data.message, 'err_' + Date.now());
+    appendChatMsg('assistant', 'ERROR: ' + data.message, 'err_' + Date.now());
     document.getElementById('chat-send-btn').disabled = false;
   });
 
@@ -1571,7 +1572,7 @@ function updateTicker(s) {
 
   if (s.busy) {
     statusLine.className = 'busy';
-    statusLine.textContent = 'Agent arbeitet ... ' + (s.elapsedSec || 0) + 's';
+    statusLine.textContent = 'Agent working... ' + (s.elapsedSec || 0) + 's';
     btn.disabled = true;
     if (cancelBtn) cancelBtn.style.display = 'inline-block';
     if (s.currentTask) { taskEl.style.display = 'block'; taskEl.textContent = 'Task: ' + s.currentTask; }
@@ -1585,12 +1586,12 @@ function updateTicker(s) {
 
   if (s.activeRefs && s.activeRefs.length) {
     activeEl.style.display = 'block';
-    activeEl.textContent = 'Aktiv: ' + s.activeRefs.join(', ');
+    activeEl.textContent = 'Active: ' + s.activeRefs.join(', ');
   } else { activeEl.style.display = 'none'; }
 
   if (s.lastRefs && s.lastRefs.length) {
     lastEl.style.display = 'block';
-    lastEl.textContent = 'Zuletzt: ' + s.lastRefs.join(', ');
+    lastEl.textContent = 'Last: ' + s.lastRefs.join(', ');
   } else { lastEl.style.display = 'none'; }
 }
 
@@ -1608,7 +1609,7 @@ async function sendChat() {
     if (data.error) { alert('Agent: ' + data.error); btn.disabled = false; }
     // Auto-open agent panel
     if (!agentPanelOpen) toggleAgentPanel();
-  } catch (e) { alert('Fehler: ' + e.message); btn.disabled = false; }
+  } catch (e) { alert('Error: ' + e.message); btn.disabled = false; }
 }
 
 // Enter to send, Shift+Enter for newline
@@ -1690,4 +1691,65 @@ connectSSE();
 </script>
 </body>
 </html>
+
+>
+
+
+
+>
+
+
+
+
+>
+
+
+
+>
+
+
+
+>
+
+>
+
+
+
+>
+
+
+
+
+
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

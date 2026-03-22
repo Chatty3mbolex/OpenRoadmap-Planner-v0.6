@@ -23,6 +23,7 @@
 
   Credits / Contributors:
   - Rick Kühnreich (Embolex)
+  - OpenClaw Agent (gpt-5.2-codex) — special thanks
   - OpenAI ChatGPT 5.2-codex (assistance)
   - Anthropic Claude (assistance)
 */
@@ -51,9 +52,21 @@ const CHAT_BACKEND = String(process.env.ROADMAP_CHAT_BACKEND || 'gateway').toLow
 
 // DIRECT backend (OpenAI Responses API)
 // Best-practice: keep the API key server-side. Do NOT pass it to the browser.
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_PROJECT_KEY || process.env.OPENAI_KEY || 'NOT_SET';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_PROJECT_KEY || process.env.OPENAI_KEY || '';
 const OPENAI_BASE_URL = String(process.env.OPENAI_BASE_URL || 'https://api.openai.com').replace(/\/$/, '');
 const OPENAI_MODEL = String(process.env.ROADMAP_OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4.1-mini');
+
+// Throttle LLM requests to avoid hammering providers / rate-limits.
+// User requirement: 5s minimum gap between LLM requests.
+const MIN_LLM_INTERVAL_MS = Number(process.env.ROADMAP_LLM_MIN_INTERVAL_MS || 5000);
+let lastLlmRequestAtMs = 0;
+
+async function enforceLlmMinInterval() {
+  const now = Date.now();
+  const waitMs = Math.max(0, MIN_LLM_INTERVAL_MS - (now - lastLlmRequestAtMs));
+  if (waitMs > 0) await delay(waitMs);
+  lastLlmRequestAtMs = Date.now();
+}
 
 function getOpenClawGatewayAuth() {
   // Best-effort read of the local OpenClaw config so the Roadmap server can
@@ -126,7 +139,7 @@ function loadDB() {
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
   }
   const empty = {
-    meta: { version: '1.0.0', projectName: 'DEFAULT', lastScan: null },
+    meta: { version: '0.10.0', projectName: 'OpenRoadmap Planner', lastScan: null },
     categories: [],
     nodes: [],
     storybeats: [],
@@ -590,7 +603,7 @@ function extractGatewayTextDelta(payload) {
   return '';
 }
 
-function startGatewayChatRun(userText, assistantMsg) {
+async function startGatewayChatRun(userText, assistantMsg) {
   const gateway = getOpenClawGatewayAuth();
   if (!gateway || !gateway.httpBase || !gateway.token) {
     const msg = 'OpenClaw Gateway Auth nicht gefunden. PrÃ¼fe ~/.openclaw/openclaw.json';
@@ -600,6 +613,9 @@ function startGatewayChatRun(userText, assistantMsg) {
     finishAgentRun(1, msg);
     return false;
   }
+
+  // Global throttle across all backends.
+  await enforceLlmMinInterval();
 
   const endpoint = new URL('/v1/responses', gateway.httpBase);
   const payload = JSON.stringify({
@@ -1384,6 +1400,9 @@ async function startDirectChatRun(userText, assistantMsg) {
     return false;
   }
 
+  // Global throttle across all backends.
+  await enforceLlmMinInterval();
+
   try {
     emitSSE('agent.log', { stream: 'meta', text: `[DIRECT] OpenAI model=${OPENAI_MODEL}` });
 
@@ -1453,11 +1472,14 @@ async function startDirectChatRun(userText, assistantMsg) {
   }
 }
 
-function startAcpChatRun(userText, assistantMsg) {
+async function startAcpChatRun(userText, assistantMsg) {
   // Spawn ACP client via acpx.
   // IMPORTANT: For OpenClaw, acpx must authenticate against the local Gateway.
   // We reuse the existing OpenClaw Gateway token from ~/.openclaw/openclaw.json
   // (we do NOT modify tokens; we only read them, similar to startGatewayChatRun).
+  // Global throttle across all backends.
+  await enforceLlmMinInterval();
+
   const sessionName = agentState.sessionName || DEFAULT_SESSION_NAME;
   const cwd = __dirname;
   // Resolve acpx command on Windows reliably.
